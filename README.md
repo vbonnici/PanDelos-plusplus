@@ -1,2 +1,2 @@
-# PanDelos-
+# PanDelos-plusplus
 PanDelos in C++
