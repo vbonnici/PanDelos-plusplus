@@ -1,75 +1,85 @@
 #include <iostream>
 #include <fstream>
 #include <string>
-#include <cstdlib>
-#include <ctime>
 #include <vector>
 #include <map>
-using namespace std;
+#include <unordered_set>
 
 class PangeneIData {
 public:
-    explicit PangeneIData(const char *filename) {
-        this->init(filename);
+    explicit PangeneIData(const char* filename) {
+        this->open_file(filename);
 
-        string line;
-        bool nameLine = true;
-        string genomeName, seqName, product, seq;
-        vector<string> cc;
-        map<string, int> genomeID;
+        bool nameline = true;
+        std::string genome_name, sequence_name, sequence_description;
+        std::map<std::string, int> genomeID;
         int genomeid;
 
         while (this->is_valid()) {
-            if (nameLine) {
-                genomeName = this->next_string();
-                seqName = this->next_string();
-                product = this->next_string();
+            if (nameline) {
+                genome_name = this->next_string();
+                sequence_name = this->next_string();
+                sequence_description = this->next_string();
             } else {
                 this->sequences.emplace_back(this->next_string());
-                this->sequenceName.push_back(seqName);
-                auto genomeid_iterator = genomeID.find(genomeName);
+                this->sequences_name.push_back(sequence_name);
+                auto genomeid_iterator = genomeID.find(genome_name);
 
                 if (genomeid_iterator == genomeID.end()) {
                     genomeid = genomeID.size();
-                    genomeID.insert(pair<string, int>(genomeName, genomeid));
+                    genomeID.insert(std::pair<std::string, int>(genome_name, genomeid));
                 }
                 else
                     genomeid = genomeid_iterator->second;
 
-                this->sequenceGenome.push_back(genomeid);
-                this->sequenceDescription.push_back(product);
+                this->sequences_genome.push_back(genomeid);
+                this->sequences_description.push_back(sequence_description);
             }
 
-            nameLine = !nameLine;
+            nameline = !nameline;
         }
 
-        this->genomeNames.reserve(genomeID.size());
+        this->genomes_names.reserve(genomeID.size());
         for (auto &it: genomeID)
-            this->genomeNames.push_back(it.first);
+            this->genomes_names.push_back(it.first);
     }
 
-    //TODO: funzione templatica print vector
+    void compute_alphabet() {
+        for (auto &i: this->sequences)
+            for(char &a : i)
+                this->alphabet.insert(a);
+    }
+
+    std::unordered_set<char> get_alphabet() {
+        return this->alphabet;
+    }
+
+    void print_genomes_names() {
+        print_container<std::string, std::vector<std::string>::iterator>(std::cout, this->genomes_names.begin(), this->genomes_names.end(), "\n");
+    }
+
+    void print_sequences_name() {
+        print_container<std::string, std::vector<std::string>::iterator>(std::cout, this->sequences_name.begin(), this->sequences_name.end(), "\n");
+    }
+
+    void print_sequences_description() {
+        print_container<std::string, std::vector<std::string>::iterator>(std::cout, this->sequences_description.begin(), this->sequences_description.end(), "\n");
+    }
+
     void print_sequences() {
-        for (auto & i: this->sequences)
-            std::cout << i << endl;
+        print_container<std::string, std::vector<std::string>::iterator>(std::cout, this->sequences.begin(), this->sequences.end(), "\n");
     }
 
-    void print_sequenceName() {
-        for (auto & i: this->sequenceName)
-            std::cout << i << endl;
+    void print_alphabet() {
+        print_container<char, std::unordered_set<char>::iterator>(std::cout, this->alphabet.begin(), this->alphabet.end(), "\n");
     }
 
-    void print_sequenceDescription() {
-        for (auto & i: this->sequenceDescription)
-            std::cout << i << endl;
+    void print_sequences_genome() {
+        print_container<int, std::vector<int>::iterator>(std::cout, this->sequences_genome.begin(), this->sequences_genome.end(), "\n");
+
     }
 
-    void get_genomeNames() {
-        for (auto & i: this->sequenceName)
-            std::cout << i << endl;
-    }
-
-   void close() {
+    void close() {
         fclose(this->pFile);
         free(this->buffer);
     }
@@ -80,14 +90,15 @@ private:
     char* buffer{};
     long pi{};
 
-    vector<string> sequences;
-    vector<string> sequenceName;
-    vector<string> sequenceDescription;
-    vector<int> sequenceGenome;
-    vector<string> genomeNames;
+    std::vector<std::string> sequences;
+    std::vector<std::string> sequences_name;
+    std::vector<std::string> sequences_description;
+    std::vector<int> sequences_genome;
+    std::vector<std::string> genomes_names;
+    std::unordered_set<char> alphabet;
 
     //TODO: aggiungere exception safety apertura file
-    void init(const char *filename) {
+    void open_file(const char* filename) {
         size_t result;
 
         pFile = fopen(filename, "rb");
@@ -142,5 +153,10 @@ private:
         pi++;
 
         return buffer + ci;
+    }
+
+    template<typename T, typename InputIterator>
+    void print_container(std::ostream& ostr, InputIterator itbegin, InputIterator itend, const std::string& delimiter) {
+        std::copy(itbegin, itend, std::ostream_iterator<T>(ostr, delimiter.c_str()));
     }
 };
