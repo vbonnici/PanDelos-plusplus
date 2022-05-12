@@ -14,4 +14,3 @@ hypothetical protein
 ## sequence
 MWLPVLFRFLVDSLATLGHRLAASGITSRMLSVIPVLFFWG
 
-
