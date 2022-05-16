@@ -25,10 +25,12 @@ int main(int argc, char* argv[]){
 
     PreFiltering filter = PreFiltering(6, sequences);
 
-    //filter.populate_map_sequences(); //tempo di esecuzione troppo lungo
-    //std::unordered_map<std::string, std::unordered_map<std::bitset<12>, int>> result = filter.get_map_sequences();
+    filter.populate_map_sequences(); //tempo di esecuzione troppo lungo
 
     filter.calculate_kmer_frequency();
+
+    auto result = filter.get_map_sequences();
+
 
     std::cout << "Tempo di lettura del file (secondi): " << t2-t1 << std::endl;
 
