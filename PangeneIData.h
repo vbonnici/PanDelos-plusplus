@@ -1,3 +1,6 @@
+#ifndef PANDELOS_PLUSPLUS_PANGENEIDATA_H
+#define PANDELOS_PLUSPLUS_PANGENEIDATA_H
+
 #include <iostream>
 #include <fstream>
 #include <string>
@@ -50,33 +53,59 @@ public:
                 this->alphabet.insert(a);
     }
 
-    std::unordered_set<char> get_alphabet() {
-        return this->alphabet;
-    }
 
     void print_genomes_names() {
-        print_container<std::string, std::vector<std::string>::iterator>(std::cout, this->genomes_names.begin(), this->genomes_names.end(), "\n");
+        print_container<std::string, std::vector<std::string>::iterator>
+            (std::cout, this->genomes_names.begin(), this->genomes_names.end(), "\n");
     }
 
     void print_sequences_name() {
-        print_container<std::string, std::vector<std::string>::iterator>(std::cout, this->sequences_name.begin(), this->sequences_name.end(), "\n");
+        print_container<std::string, std::vector<std::string>::iterator>
+                (std::cout, this->sequences_name.begin(), this->sequences_name.end(), "\n");
     }
 
     void print_sequences_description() {
-        print_container<std::string, std::vector<std::string>::iterator>(std::cout, this->sequences_description.begin(), this->sequences_description.end(), "\n");
+        print_container<std::string, std::vector<std::string>::iterator>
+                (std::cout, this->sequences_description.begin(), this->sequences_description.end(), "\n");
     }
 
     void print_sequences() {
-        print_container<std::string, std::vector<std::string>::iterator>(std::cout, this->sequences.begin(), this->sequences.end(), "\n");
+        print_container<std::string, std::vector<std::string>::iterator>
+                (std::cout, this->sequences.begin(), this->sequences.end(), "\n");
     }
 
     void print_alphabet() {
-        print_container<char, std::unordered_set<char>::iterator>(std::cout, this->alphabet.begin(), this->alphabet.end(), "\n");
+        print_container<char, std::unordered_set<char>::iterator>
+                (std::cout, this->alphabet.begin(), this->alphabet.end(), "\n");
     }
 
     void print_sequences_genome() {
-        print_container<int, std::vector<int>::iterator>(std::cout, this->sequences_genome.begin(), this->sequences_genome.end(), "\n");
+        print_container<int, std::vector<int>::iterator>
+                (std::cout, this->sequences_genome.begin(), this->sequences_genome.end(), "\n");
+    }
 
+    std::vector<int>& get_sequences_genome() {
+        return this->sequences_genome;
+    }
+
+    std::vector<std::string>& get_genomes_names() {
+        return this->genomes_names;
+    }
+
+    std::vector<std::string>& get_sequences_name() {
+        return this->sequences_name;
+    }
+
+    std::vector<std::string>& get_sequences_description() {
+        return this->sequences_description;
+    }
+
+    std::vector<std::string>& get_sequences() {
+        return this->sequences;
+    }
+
+    std::unordered_set<char>& get_alphabet() {
+        return this->alphabet;
     }
 
     void close() {
@@ -160,3 +189,5 @@ private:
         std::copy(itbegin, itend, std::ostream_iterator<T>(ostr, delimiter.c_str()));
     }
 };
+
+#endif //PANDELOS_PLUSPLUS_PANGENEIDATA_H

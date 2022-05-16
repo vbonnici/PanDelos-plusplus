@@ -1,6 +1,6 @@
 #include "PangeneIData.h"
+#include "PreFiltering.h"
 #include <sys/time.h>
-using namespace std;
 
 int main(int argc, char* argv[]){
 
@@ -16,15 +16,21 @@ int main(int argc, char* argv[]){
     fire.close();
     fire.compute_alphabet();
 
-    //fire.print_genomes_names();
-    //fire.print_sequences_name();
-    //fire.print_sequences();
-    //fire.print_sequences_description();
-    //fire.print_alphabet();
+    std::vector<int> sequences_genome = fire.get_sequences_genome();
+    std::vector<std::string> genomes_names = fire.get_genomes_names();
+    std::vector<std::string> sequences_name = fire.get_sequences_name();
+    std::vector<std::string> sequences_description = fire.get_sequences_description();
+    std::vector<std::string> sequences = fire.get_sequences();
+    std::unordered_set<char> alphabet = fire.get_alphabet();
 
-    //fire.print_sequences_genome();
+    PreFiltering filter = PreFiltering(6, sequences);
 
-    cout << "Tempo di lettura del file (secondi): " << t2-t1 << endl;
+    //filter.populate_map_sequences(); //tempo di esecuzione troppo lungo
+    //std::unordered_map<std::string, std::unordered_map<std::bitset<12>, int>> result = filter.get_map_sequences();
+
+    filter.calculate_kmer_frequency();
+
+    std::cout << "Tempo di lettura del file (secondi): " << t2-t1 << std::endl;
 
     return 0;
 };
