@@ -16,20 +16,24 @@ int main(int argc, char* argv[]){
     fire.close();
     fire.compute_alphabet();
 
-    std::vector<int> sequences_genome = fire.get_sequences_genome();
-    std::vector<std::string> genomes_names = fire.get_genomes_names();
-    std::vector<std::string> sequences_name = fire.get_sequences_name();
-    std::vector<std::string> sequences_description = fire.get_sequences_description();
-    std::vector<std::string> sequences = fire.get_sequences();
-    std::unordered_set<char> alphabet = fire.get_alphabet();
+    auto sequences_genome = fire.get_sequences_genome();
+    auto genomes_names = fire.get_genomes_names();
+    auto sequences_name = fire.get_sequences_name();
+    auto sequences_description = fire.get_sequences_description();
+    auto sequences = fire.get_sequences();
+    auto alphabet = fire.get_alphabet();
 
     PreFiltering filter = PreFiltering(6, sequences);
 
-    filter.populate_map_sequences(); //tempo di esecuzione troppo lungo
+    filter.populate_map_sequences();
 
-    filter.calculate_kmer_frequency();
+    //filter.calculate_kmer_frequency();
 
-    auto result = filter.get_map_sequences();
+    //auto result = filter.get_map_sequences();
+
+    filter.calculate_bh();
+    filter.calculate_bbh();
+
 
 
     std::cout << "Tempo di lettura del file (secondi): " << t2-t1 << std::endl;
