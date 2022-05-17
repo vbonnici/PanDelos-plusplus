@@ -10,11 +10,14 @@
 #include <unordered_map>
 
 
-template<size_t sz> struct bitset_comparer { //serve solo per le map ordinate
+template<size_t sz> struct bitset_comparer {
     bool operator() (const std::bitset<sz> &b1, const std::bitset<sz> &b2) const {
         return b1.to_ulong() < b2.to_ulong();
     }
 };
+
+typedef std::unordered_map<std::string,std::string>::value_type unmap_string_string_value_type;
+
 
 class PreFiltering {
 public:
@@ -41,7 +44,7 @@ public:
                 if(kmer_is_valid(kmer)) {
                     //std::cout << kmer << std::endl;
                     std::bitset<12> kmer_in_bit = kmer_to_bit(kmer);
-                    std::cout << kmer_in_bit << std::endl;
+                    //std::cout << kmer_in_bit << std::endl;
 
                     auto result = i.second.find(kmer_in_bit);
 
@@ -67,6 +70,7 @@ public:
                 if(sequence_a[0] != sequence_b[0]) {
                     for (int j = 0; j < 1<<12 ; j++) {
                         std::bitset<12> kmer(j);
+                        //std::cout << kmer << std::endl;
 
                         auto result_a = a.second.find(kmer);
                         auto result_b = b.second.find(kmer);
@@ -74,29 +78,35 @@ public:
                         int value_a = 0;
                         int value_b = 0;
 
-                        if(result_a != a.second.end())
+                        if (result_a != a.second.end()) {
                             value_a = result_a->second;
+                            //std::cout << "j - value_a: " << j << " " << value_a << std::endl;
+                        }
 
-                        if(result_b != b.second.end())
+                        if (result_b != b.second.end()) {
                             value_b = result_b->second;
+                            //std::cout << "j - value_b: " << j << " " << value_b << std::endl;
+                        }
 
-                        if(value_a < value_b) {
+                        if (value_a < value_b) {
                             value_min[index] = value_a;
                             ++index;
-                        }
-                        else {
+                        } else {
                             value_max[index] = value_b;
                             ++index;
                         }
+                    }
 
-                        double jaccard_similarity = sum_array(value_min, 4095) / sum_array(value_max, 4095);
+                    std::cout << "sum array min: " << sum_array(value_min, 4095) << std::endl;
+                    std::cout << "sum array max: " << sum_array(value_max, 4095) << std::endl;
 
-                        if(jaccard_similarity > this->soglia_jaccard) {
-                            std::unordered_map<std::string, double> temp;
-                            temp.insert(std::make_pair(sequence_b[0], jaccard_similarity));
+                    double jaccard_similarity = (double) sum_array(value_min, 4095) / sum_array(value_max, 4095);
 
-                            this->map_genes_jaccard.insert(std::make_pair(sequence_a[0], temp));
-                        }
+                    if(jaccard_similarity > this->soglia_jaccard) {
+                        std::unordered_map<std::string, double> temp;
+                        temp.insert(std::make_pair(sequence_b[0], jaccard_similarity));
+
+                        this->map_genes_jaccard.insert(std::make_pair(sequence_a[0], temp));
                     }
                 }
             }
@@ -116,17 +126,27 @@ public:
                 auto second_genes_map_b = b.second;
 
                 if(a.first != b.first) {
-                    for (auto &c: second_genes_map_a) {
-                        auto result_a = second_genes_map_b.find(c.first);
-                        if (result_a != second_genes_map_b.end()) {
-                            for (auto &d: second_genes_map_b) {
-                                auto result_b = second_genes_map_a.find(d.first);
 
-                                if (result_b != second_genes_map_a.end()) {
-                                    this->genes_bbh.insert(std::make_pair(result_a->first, result_b->first));
-                                }
-                            }
-                        }
+                    auto result_a = second_genes_map_b.find(a.first);
+                    auto result_b = second_genes_map_a.find(b.first);
+
+                    if(result_a != second_genes_map_b.end() && result_b != second_genes_map_a.end()) {
+
+                        auto temp_a = this->genes_bbh.find(result_a->first);
+                        auto temp_b = std::find_if(this->genes_bbh.begin(), this->genes_bbh.end(), [&result_b](const unmap_string_string_value_type& vt)
+                        { return vt.second == result_b->first; });
+
+                        if(temp_a != this->genes_bbh.end() && temp_b != this->genes_bbh.end())
+                            continue;
+
+                        temp_a = this->genes_bbh.find(result_b->first);
+                        temp_b = std::find_if(this->genes_bbh.begin(), this->genes_bbh.end(), [&result_a](const unmap_string_string_value_type& vt)
+                        { return vt.second == result_a->first; });
+
+                        if(temp_a != this->genes_bbh.end() && temp_b != this->genes_bbh.end())
+                            continue;
+
+                        this->genes_bbh.insert(std::make_pair(result_a->first, result_b->first)); //non ha trovato nulla e inserisce
                     }
                 }
             }
@@ -163,6 +183,14 @@ public:
 
     std::unordered_map<std::string, std::map<std::bitset<12>, int, bitset_comparer<12>>>& get_map_sequences() {
         return this->map_sequences;
+    }
+
+    std::unordered_map<std::string, std::unordered_map<std::string, double>>& get_map_genes_jaccard() {
+        return this->map_genes_jaccard;
+    }
+
+    std::unordered_map<std::string, std::string>& get_genes_bbh() {
+        return this->genes_bbh;
     }
 
 private:

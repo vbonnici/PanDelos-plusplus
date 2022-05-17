@@ -11,7 +11,7 @@ int main(int argc, char* argv[]){
 
     PangeneIData fire = PangeneIData(argv[1]);
 
-    gettimeofday(&tempo,nullptr); t2 = tempo.tv_sec+(tempo.tv_usec/1000000.0);
+    //gettimeofday(&tempo,nullptr); t2 = tempo.tv_sec+(tempo.tv_usec/1000000.0);
 
     fire.close();
     fire.compute_alphabet();
@@ -27,16 +27,21 @@ int main(int argc, char* argv[]){
 
     filter.populate_map_sequences();
 
-    //filter.calculate_kmer_frequency();
+    filter.calculate_kmer_frequency();
 
-    //auto result = filter.get_map_sequences();
+    auto map_sequences = filter.get_map_sequences();
 
     filter.calculate_bh();
+
+    auto map_genes_jaccard = filter.get_map_genes_jaccard();
+
     filter.calculate_bbh();
 
+    auto genes_bbh = filter.get_genes_bbh();
 
+    gettimeofday(&tempo,nullptr); t2 = tempo.tv_sec+(tempo.tv_usec/1000000.0);
 
-    std::cout << "Tempo di lettura del file (secondi): " << t2-t1 << std::endl;
+    std::cout << "Tempo computazione: " << t2-t1 << std::endl;
 
     return 0;
 };
