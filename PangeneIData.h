@@ -110,15 +110,26 @@ public:
     }
 
     void close() {
-        fclose(this->pFile);
-        free(this->buffer);
+        try {
+            if(fclose(this->input_file) != 0)
+                throw std::runtime_error(std::strerror(errno));
+
+            free(this->buffer);
+
+            if(this->buffer == NULL)
+                throw std::runtime_error(std::strerror(errno));
+
+        } catch(std::exception const& e) {
+            std::cout << "Exception: " << e.what() << "\n";
+            exit(11);
+        }
     }
 
 private:
-    FILE* pFile{};
-    long lSize{};
+    FILE* input_file{};
+    long file_size{};
     char* buffer{};
-    long pi{};
+    long cursor{};
 
     std::vector<std::string> sequences;
     std::vector<std::string> sequences_name; //TODO: forse non serve
@@ -127,62 +138,60 @@ private:
     std::vector<std::string> genomes_names; //TODO: forse non serve
     std::unordered_set<char> alphabet;
 
-    //TODO: aggiungere exception safety apertura file
     void open_file(const char* filename) {
         size_t result;
+        this->cursor = 0;
 
-        pFile = fopen(filename, "rb");
-        if (pFile == NULL) {
-            fputs("File error\n", stderr);
-            exit(1);
+        try {
+            this->input_file = fopen(filename, "rb");
+            if (this->input_file == NULL)
+                throw std::runtime_error(std::strerror(errno));
+
+            // obtain file size:
+            fseek(this->input_file, 0, SEEK_END);
+            this->file_size = ftell(this->input_file);
+            rewind(this->input_file);
+
+            // allocate memory to contain the whole file:
+            this->buffer = (char *) malloc(sizeof(char) * this->file_size);
+            if (this->buffer == NULL)
+                throw std::runtime_error(std::strerror(errno));
+
+            // copy the file into the buffer:
+            result = fread(this->buffer, 1, this->file_size, this->input_file);
+            if (result != this->file_size)
+                throw std::runtime_error("size fread != filesize");
+
+        } catch(std::exception const& e) {
+            std::cout << "Exception: " << e.what() << "\n";
+            exit(11);
         }
-
-        // obtain file size:
-        fseek(pFile, 0, SEEK_END);
-        lSize = ftell(pFile);
-        rewind(pFile);
-
-        // allocate memory to contain the whole file:
-        buffer = (char*) malloc(sizeof(char) * lSize);
-        if (buffer == NULL) {
-            fputs("Memory error\n", stderr);
-            exit(2);
-        }
-
-        // copy the file into the buffer:
-        result = fread(buffer, 1, lSize, pFile);
-        if (result != lSize) {
-            fputs("Reading error\n", stderr);
-            exit(3);
-        }
-
-        pi = 0;
 
         //std::cout<<buffer<<"\n";
     }
 
     [[nodiscard]] bool is_valid() const {
-        return this->pi < this->lSize;
+        return this->cursor < this->file_size;
     }
 
     char* next_string() {
 
-        while ((this->is_valid()) && ((buffer[pi] == '\n') || (buffer[pi] == '\t') || (buffer[pi] == '\r'))) {
-            pi++;
+        while ((this->is_valid()) && ((this->buffer[this->cursor] == '\n') || (this->buffer[this->cursor] == '\t') || (this->buffer[this->cursor] == '\r'))) {
+            ++this->cursor;
         }
 
-        long ci = pi;
+        long ci = this->cursor;
 
-        while ((this->is_valid()) && (buffer[pi] != '\n') && (buffer[pi] != '\t') && (buffer[pi] != '\r')) {
-            pi++;
+        while ((this->is_valid()) && (this->buffer[this->cursor] != '\n') && (this->buffer[this->cursor] != '\t') && (this->buffer[this->cursor] != '\r')) {
+            ++this->cursor;
         }
 
         if (this->is_valid()) {
-            buffer[pi] = '\0';
+            this->buffer[this->cursor] = '\0';
         }
-        pi++;
+        ++this->cursor;
 
-        return buffer + ci;
+        return this->buffer + ci;
     }
 
     template<typename T, typename InputIterator>
