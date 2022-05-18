@@ -303,4 +303,5 @@ private:
     }
 };
 
+
 #endif //PANDELOS_PLUSPLUS_PANGENEIDATA_H

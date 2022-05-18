@@ -255,6 +255,7 @@ private:
 
         return out;
     }
+
 };
 
 #endif //PANDELOS_PLUSPLUS_PREFILTERING_H
