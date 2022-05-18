@@ -63,6 +63,7 @@ public:
             this->genomes_names.push_back(it.first);
     }
 
+    //TODO: cambiare implementazione perchè il vector contiene anche il nome del gene
     /*
      * For each gene sequence, it inserts each character of which it is composed into an unordered set
      * (if not yet present)
@@ -200,7 +201,7 @@ private:
     char* buffer{};
     long cursor{};
 
-    std::vector<std::string> sequences;
+    std::vector<std::string> sequences; //TODO: cambiare nome perchè contiene anche il nome del gene oltre alla seq.
     std::vector<std::string> sequences_name; //TODO: forse non serve
     std::vector<std::string> sequences_description;
     std::vector<int> sequences_genome;

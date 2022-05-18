@@ -25,19 +25,19 @@ int main(int argc, char* argv[]){
 
     PreFiltering filter = PreFiltering(6, sequences);
 
-    filter.populate_map_sequences();
+    filter.init_map_sequences_kmers();
 
     filter.calculate_kmer_frequency();
 
-    auto map_sequences = filter.get_map_sequences();
+    auto map_sequences_kmers = filter.get_map_sequences_kmers();
 
-    filter.calculate_bh();
+    filter.calculate_best_hits();
 
-    auto map_genes_jaccard = filter.get_map_genes_jaccard();
+    auto map_best_hits = filter.get_map_best_hits();
 
-    filter.calculate_bbh();
+    filter.calculate_bidirectional_best_hits();
 
-    auto genes_bbh = filter.get_genes_bbh();
+    auto map_bidirectional_best_hits = filter.get_map_bidirectional_best_hits();
 
     gettimeofday(&tempo,nullptr); t2 = tempo.tv_sec+(tempo.tv_usec/1000000.0);
 
