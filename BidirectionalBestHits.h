@@ -1,5 +1,5 @@
-#ifndef PANDELOS_PLUSPLUS_PREFILTERING_H
-#define PANDELOS_PLUSPLUS_PREFILTERING_H
+#ifndef PANDELOS_PLUSPLUS_BIDIRECTIONALBESTHITS_H
+#define PANDELOS_PLUSPLUS_BIDIRECTIONALBESTHITS_H
 
 #include <iostream>
 #include <string>
@@ -19,9 +19,9 @@ template<size_t sz> struct bitset_comparer {
 typedef std::unordered_map<std::string, std::string>::value_type unmap_string_string_value_type;
 
 
-class PreFiltering {
+class BidirectionalBestHits {
 public:
-    explicit PreFiltering(const int& k, const std::vector<std::string>& sequences) : kmer_size(k), jaccard_threshold(0.8) {
+    explicit BidirectionalBestHits(const int& k, const std::vector<std::string>& sequences) : kmer_size(k), jaccard_threshold(0.8) {
         this->sequences = &sequences;
     }
 
@@ -261,4 +261,4 @@ private:
 
 };
 
-#endif //PANDELOS_PLUSPLUS_PREFILTERING_H
+#endif //PANDELOS_PLUSPLUS_BIDIRECTIONALBESTHITS_H
