@@ -40,8 +40,9 @@ public:
     }
 
     void calculate_kmer_frequency() {
+        int counter = 0;
         for(auto &i : this->map_sequences_kmers) {
-            std::vector<std::string> sequence = split_string(i.first, ',');
+            std::vector<std::string> sequence = split_string(i.first, '\n');
 
             for(int window = 0; window < sequence[1].length(); ++window) {
                 std::string kmer = sequence[1].substr(window, this->kmer_size);
@@ -59,10 +60,11 @@ public:
                         result->second += 1;
                 }
             }
+            //++counter;
+            //std::cout << sequence[0] << counter << std::endl;
         }
     }
 
-    //TODO: cancellare stampe di debug
     void calculate_best_hits() {
         int value_a;
         int value_b;
@@ -72,8 +74,8 @@ public:
 
         for(auto &a : this->map_sequences_kmers) {
             for(auto &b : this->map_sequences_kmers) {
-                std::vector<std::string> sequence_a = split_string(a.first, ',');
-                std::vector<std::string> sequence_b = split_string(b.first, ',');
+                std::vector<std::string> sequence_a = split_string(a.first, '\n');
+                std::vector<std::string> sequence_b = split_string(b.first, '\n');
 
                 counter_min = 0;
                 counter_max = 0;
@@ -106,23 +108,23 @@ public:
 
                         if (value_a < value_b || value_a == 0) {
                             if(value_a == 1 && value_b == 2)
-                                std::cout  << " value_a " << value_a << " value_b " << value_b<< std::endl;
+                                //std::cout  << " value_a " << value_a << " value_b " << value_b<< std::endl;
 
                             counter_min += value_a;
 
                         } else {
                             if(value_a == 1 && value_b == 1)
-                                std::cout  << " value_a " << value_a << " value_b " << value_b<< std::endl;
+                                //std::cout  << " value_a " << value_a << " value_b " << value_b<< std::endl;
 
                             counter_max += value_a;
                         }
                     }
 
 
-                    std::cout << "min " << counter_min << " max " << counter_max << std::endl;
+                    //std::cout << "min " << counter_min << " max " << counter_max << std::endl;
 
                     jaccard_similarity = (double) counter_min / counter_max;
-                    std::cout << "jaccard similarity " << jaccard_similarity << std::endl;
+                    //std::cout << "jaccard similarity " << jaccard_similarity << std::endl;
 
                     if(isfinite(jaccard_similarity) && jaccard_similarity > this->jaccard_threshold) {
                         std::unordered_map<std::string, double> temp;
@@ -133,6 +135,7 @@ public:
                 }
             }
         }
+        std::cout << "best hit calcolati " << std::endl;
     }
 
     /*
@@ -232,12 +235,12 @@ public:
     }
 
 private:
-    const int kmer_size; //TODO: per futuri utilizzi nucleotidico/amminoacidico - flag di riferimento
+    const int kmer_size;
     const double jaccard_threshold;
-    const std::vector<std::string>* sequences; //TODO: ricorda di cambiare nome...
-    std::unordered_map<std::string, std::map<std::bitset<12>, int, bitset_comparer<12>>> map_sequences_kmers; //<sequenza - <kmer, contatore>>
-    std::unordered_map<std::string, std::unordered_map<std::string, double>> map_best_hits; //<sequence_name1, <sequence_name2, jaccard>>
-    std::unordered_map<std::string, std::string> map_bidirectional_best_hits; //<sequence_name1, <sequence_name2>
+    const std::vector<std::string>* sequences;
+    std::unordered_map<std::string, std::map<std::bitset<12>, int, bitset_comparer<12>>> map_sequences_kmers; //map<sequenza - map<kmer, contatore>>
+    std::unordered_map<std::string, std::unordered_map<std::string, double>> map_best_hits; //map<sequence_name1, map<sequence_name2, jaccard>>
+    std::unordered_map<std::string, std::string> map_bidirectional_best_hits; //map<sequence_name1, sequence_name2>
 
     [[nodiscard]] bool kmer_is_valid(const std::string &str) const {
         return str.length() == this->kmer_size && str.find_first_not_of("ACGT") == std::string::npos; //TODO: aggiungere test di validità per amminoacidi

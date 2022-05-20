@@ -40,7 +40,7 @@ public:
                 sequence_name = this->next_string();
                 sequence_description = this->next_string();
             } else {
-                this->sequences.emplace_back(sequence_name + "," + this->next_string());
+                this->sequences.emplace_back(sequence_name + "\n" + this->next_string());
                 this->sequences_name.push_back(sequence_name);
                 auto genomeid_iterator = genomeID.find(genome_name);
 
@@ -201,7 +201,7 @@ private:
     char* buffer{};
     long cursor{};
 
-    std::vector<std::string> sequences; //TODO: cambiare nome perchè contiene anche il nome del gene oltre alla seq.
+    std::vector<std::string> sequences;
     std::vector<std::string> sequences_name; //TODO: forse non serve
     std::vector<std::string> sequences_description;
     std::vector<int> sequences_genome;
