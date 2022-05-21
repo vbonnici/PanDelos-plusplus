@@ -20,7 +20,7 @@ public:
 
     void init_map_sequences_kmers() {
         for(auto &sequence: *this->sequences) {
-            std::array<int, 4095> array{0};
+            std::array<unsigned int, 4095> array{0};
 
             this->map_sequences_kmers.insert(std::make_pair(sequence, array));
         }
@@ -34,21 +34,21 @@ public:
     }
 
     void calculate_best_hits() {
-        int value_a;
-        int value_b;
-        int counter_min;
-        int counter_max;
+        unsigned int value_a;
+        unsigned int value_b;
+        unsigned int counter_min;
+        unsigned int counter_max;
         double jaccard_similarity;
 
         for(auto &a : this->map_sequences_kmers) {
             for(auto &b : this->map_sequences_kmers) {
-                std::vector<std::string> sequence_a = split_string(a.first, '\n');
-                std::vector<std::string> sequence_b = split_string(b.first, '\n');
+                std::vector<std::string> sequence_a = PreFilter::split_string(a.first, '\n');
+                std::vector<std::string> sequence_b = PreFilter::split_string(b.first, '\n');
 
                 counter_min = 0;
                 counter_max = 0;
 
-                if (!this->check_constraint(sequence_a, sequence_b))
+                if (!PreFilter::check_constraint(sequence_a, sequence_b))
                     continue;
 
                 for (int j = 0; j < 4095; ++j) {
@@ -77,10 +77,10 @@ public:
                 }
             }
         }
-        std::cout << "best hit calcolati " << std::endl;
+        std::cout << "best hits calcolati " << std::endl;
     }
 
-    std::unordered_map<std::string, std::array<int, 4095>>& get_map_sequences_kmers() {
+    std::unordered_map<std::string, std::array<unsigned int, 4095>>& get_map_sequences_kmers() {
         return this->map_sequences_kmers;
     }
 
@@ -93,7 +93,7 @@ private:
     const int flag; //0 amino acids, 1 nucleotides
     const int kmer_size;
     const std::vector<std::string>* sequences;
-    std::unordered_map<std::string, std::array<int, 4095>> map_sequences_kmers;
+    std::unordered_map<std::string, std::array<unsigned int, 4095>> map_sequences_kmers;
     std::unordered_map<std::string, std::unordered_map<std::string, double>> map_best_hits;
 
     [[nodiscard]] bool kmer_is_valid(const std::string &str) const {
@@ -142,7 +142,7 @@ private:
         if(sequence_a[0] == sequence_b[0])
             return false;
 
-        if(sequence_a[0].length() >= sequence_b[0].length() || sequence_b[0].length() >= sequence_a[0].length())
+        if(sequence_a[0].length() >= sequence_b[0].length()*2 || sequence_b[0].length() >= sequence_a[0].length()*2)
             return false;
 
         return true;
@@ -150,13 +150,13 @@ private:
 
     void calculate_kmer_multiplicity_nucleotides() {
         for(auto &i : this->map_sequences_kmers) {
-            std::vector<std::string> sequence = split_string(i.first, '\n');
+            std::vector<std::string> sequence = PreFilter::split_string(i.first, '\n');
 
             for(int window = 0; window < sequence[1].length(); ++window) {
                 std::string kmer = sequence[1].substr(window, this->kmer_size);
 
                 if(kmer_is_valid(kmer)) {
-                    int kmer_in_int = kmer_to_int(kmer);
+                    int kmer_in_int = PreFilter::kmer_to_int(kmer);
 
                     i.second[kmer_in_int] += 1;
                 }
@@ -166,14 +166,14 @@ private:
 
     void calculate_kmer_multiplicity_aminoacids() {
         for(auto &i : this->map_sequences_kmers) {
-            std::vector<std::string> sequence = split_string(i.first, '\n');
+            std::vector<std::string> sequence = PreFilter::split_string(i.first, '\n');
 
             for(int window = 0; window < sequence[1].length(); ++window) {
                 std::string aminoacid = sequence[1].substr(window, 2);
-                std::string kmer = aminoacid_to_nucleotides(aminoacid);
+                std::string kmer = PreFilter::aminoacid_to_nucleotides(aminoacid);
 
                 if(kmer_is_valid(kmer)) {
-                    int kmer_in_int = kmer_to_int(kmer);
+                    int kmer_in_int = PreFilter::kmer_to_int(kmer);
 
                     i.second[kmer_in_int] += 1;
                 }
