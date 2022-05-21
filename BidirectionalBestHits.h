@@ -103,33 +103,42 @@ public:
                 counter_min = 0;
                 counter_max = 0;
 
-                std::cout << sequence_a[0] << std::endl;
-
                 if(sequence_a[0] != sequence_b[0]) {
+                    for (int j = 0; j < 1<<18 ; j++) {
+                        std::bitset<18> kmer(j);
+                        //std::cout << kmer << std::endl;
 
-                    auto a_kmer = a.second;
-                    auto b_kmer = b.second;
-                    for (int j = 0; j < std::max(a_kmer.size(), b_kmer.size()) ; j++) {
+                        auto result_a = a.second.find(kmer);
+                        auto result_b = b.second.find(kmer);
 
                         value_a = 0;
                         value_b = 0;
 
-                        if(j <= a_kmer.size())
-                            value_a = a_kmer[j];
+                        if (result_a != a.second.end()) {
+                            if(result_a->first == kmer) {
+                                value_a = result_a->second;
+                                //std::cout << "j " << j << " result_a->second " << result_a->second << std::endl;
+                            }
+                        }
 
-                        if(j <= b_kmer.size())
-                            value_b = b_kmer[j];
+                        if (result_b != b.second.end()) {
+                            if(result_b->first == kmer) {
+                                value_b = result_b->second;
+                                //std::cout << "j " << j << " result_b->second " << result_b->second << " value_b " << value_b << std::endl;
+                            }
+                        }
 
                         counter_min += std::min(value_a, value_b);
                         counter_max += std::max(value_a, value_b);
                     }
 
-                    std::cout << "min " << counter_min << " max " << counter_max << std::endl;
+
+                    //std::cout << "min " << counter_min << " max " << counter_max << std::endl;
 
                     jaccard_similarity = (double) counter_min / counter_max;
-                    //std::cout << "parte 2 jaccard similarity " << jaccard_similarity << std::endl;
+                    std::cout << "jaccard similarity " << jaccard_similarity << std::endl;
 
-                    if(std::isfinite(jaccard_similarity) && jaccard_similarity > this->jaccard_threshold) {
+                    if(isfinite(jaccard_similarity) && jaccard_similarity > this->jaccard_threshold) {
                         std::unordered_map<std::string, double> temp;
                         temp.insert(std::make_pair(sequence_b[0], jaccard_similarity));
 

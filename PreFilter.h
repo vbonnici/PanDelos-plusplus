@@ -42,6 +42,7 @@ public:
         unsigned int counter_max;
         double jaccard_similarity;
 
+        int counter = 0;
         for(auto &a : this->map_sequences_kmers) {
             for(auto &b : this->map_sequences_kmers) {
                 std::vector<std::string> sequence_a = PreFilter::split_string(a.first, '\n');
@@ -76,6 +77,8 @@ public:
                     temp.insert(std::make_pair(sequence_b[0], jaccard_similarity));
 
                     this->map_best_hits.insert(std::make_pair(sequence_a[0], temp));
+                    ++counter;
+                    std::cout << counter << std::endl;
                 }
             }
         }
