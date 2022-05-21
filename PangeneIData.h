@@ -8,6 +8,9 @@
 #include <map>
 #include <unordered_set>
 #include <unordered_map>
+#include <cstring>
+#include <iterator>
+
 
 /*
  * .faa file reader in standard format
@@ -63,17 +66,6 @@ public:
             this->genomes_names.push_back(it.first);
     }
 
-    //TODO: cambiare implementazione perchè il vector contiene anche il nome del gene
-    /*
-     * For each gene sequence, it inserts each character of which it is composed into an unordered set
-     * (if not yet present)
-     */
-    void compute_alphabet() {
-        for (auto &i: this->sequences)
-            for(char &a : i)
-                this->alphabet.insert(a);
-    }
-
     /*
      * Helper that takes care of printing the vector containing the names of the genomes
      */
@@ -104,14 +96,6 @@ public:
     void print_sequences() {
         print_container<std::string, std::vector<std::string>::iterator>
                 (std::cout, this->sequences.begin(), this->sequences.end(), "\n");
-    }
-
-    /*
-     * Helper that takes care of printing the vector containing the alphabet
-     */
-    void print_alphabet() {
-        print_container<char, std::unordered_set<char>::iterator>
-                (std::cout, this->alphabet.begin(), this->alphabet.end(), "\n");
     }
 
     void print_sequences_genome() {
@@ -161,15 +145,6 @@ public:
     }
 
     /*
-     * Getter which returns the unsorted set containing the alphabet obtained from all genes in the .faa file
-     *
-     * @param[out] std::unordered_set<char>&
-     */
-    std::unordered_set<char>& get_alphabet() {
-        return this->alphabet;
-    }
-
-    /*
      * Method that encapsulates the call to fclose () function which dissociates the named stream from its underlying
      * and free () which frees the memory occupied by the buffer
      *
@@ -206,7 +181,6 @@ private:
     std::vector<std::string> sequences_description;
     std::vector<int> sequences_genome;
     std::vector<std::string> genomes_names; //TODO: forse non serve
-    std::unordered_set<char> alphabet;
 
     /*
      * This method takes care of opening the file, allocating the buffer and storing all the contents of the file in it

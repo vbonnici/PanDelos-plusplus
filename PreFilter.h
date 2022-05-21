@@ -9,6 +9,8 @@
 #include <unordered_map>
 #include <cmath>
 #include <array>
+#include <algorithm>
+
 
 class PreFilter {
 public:
@@ -67,9 +69,9 @@ public:
                 }
 
                 jaccard_similarity = (double) counter_min / counter_max;
-                std::cout << "jaccard similarity " << jaccard_similarity << std::endl;
+                std::cout << "prefilter jaccard similarity " << jaccard_similarity << std::endl;
 
-                if (isfinite(jaccard_similarity) && jaccard_similarity > this->jaccard_threshold) {
+                if (std::isfinite(jaccard_similarity) && jaccard_similarity > this->jaccard_threshold) {
                     std::unordered_map<std::string, double> temp;
                     temp.insert(std::make_pair(sequence_b[0], jaccard_similarity));
 
@@ -77,7 +79,7 @@ public:
                 }
             }
         }
-        std::cout << "best hits calcolati " << std::endl;
+        std::cout << "prefilter best hits calcolati " << std::endl;
     }
 
     std::unordered_map<std::string, std::array<unsigned int, 4095>>& get_map_sequences_kmers() {
