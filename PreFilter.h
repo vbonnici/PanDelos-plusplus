@@ -69,7 +69,7 @@ public:
                 }
 
                 jaccard_similarity = (double) counter_min / counter_max;
-                std::cout << "prefilter jaccard similarity " << jaccard_similarity << std::endl;
+                //std::cout << "prefilter jaccard similarity " << jaccard_similarity << std::endl;
 
                 if (std::isfinite(jaccard_similarity) && jaccard_similarity > this->jaccard_threshold) {
                     std::unordered_map<std::string, double> temp;

@@ -42,6 +42,9 @@ int main(int argc, char* argv[]){
 
     auto map_bidirectional_best_hits = bbh.get_map_bidirectional_best_hits();
 
+    for(auto &i : map_bidirectional_best_hits) 
+        std::cout << i.first << " " << i.second << std::endl;
+
     gettimeofday(&tempo,nullptr); t2 = tempo.tv_sec+(tempo.tv_usec/1000000.0);
 
     std::cout << "Tempo computazione: " << t2-t1 << std::endl;

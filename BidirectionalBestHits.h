@@ -65,8 +65,9 @@ public:
                 if(this->flag == 1)
                     kmer = sequence[1].substr(window, this->kmer_size);
                 else
-                    kmer = BidirectionalBestHits::aminoacid_to_nucleotides(sequence[1].substr(window, 2));
+                    kmer = BidirectionalBestHits::aminoacid_to_nucleotides(sequence[1].substr(window, 3));
 
+                	//std::cout << kmer << std::endl;
                 if(kmer_is_valid(kmer)) {
                     //std::cout << kmer << std::endl;
                     std::bitset<18> kmer_in_bit = kmer_to_bit(kmer);
@@ -99,6 +100,8 @@ public:
                 std::vector<std::string> sequence_a = split_string(a.first, '\n');
                 std::vector<std::string> sequence_b = split_string(b.first, '\n');
 
+                //std::cout << sequence_a[0] << std::endl;
+
                 counter_min = 0;
                 counter_max = 0;
 
@@ -123,7 +126,7 @@ public:
                         if (result_b != b.second.end()) {
                             if(result_b->first == kmer) {
                                 value_b = result_b->second;
-                                //std::cout << "j " << j << " result_b->second " << result_b->second << " value_b " << value_b << std::endl;
+                                //std::cout << "j " << j << " result_b->second " << result_b->second << std::endl;
                             }
                         }
 
@@ -132,10 +135,10 @@ public:
                     }
 
 
-                    std::cout << "min " << counter_min << " max " << counter_max << std::endl;
+                    //std::cout << "min " << counter_min << " max " << counter_max << std::endl;
 
                     jaccard_similarity = (double) counter_min / counter_max;
-                    std::cout << "parte 2 jaccard similarity " << jaccard_similarity << std::endl;
+                    //std::cout << "parte 2 jaccard similarity " << jaccard_similarity << std::endl;
 
                     if(std::isfinite(jaccard_similarity) && jaccard_similarity > this->jaccard_threshold) {
                         std::unordered_map<std::string, double> temp;
@@ -201,8 +204,6 @@ public:
                         ///arrived here means that there is no risk of inserting a duplicate key-value or key-value
                         this->map_bidirectional_best_hits.insert(std::make_pair(c->first, d->first));
                     }
-
-                    std::cout << "test bbh" << std::endl;
                 }
             }
         }
