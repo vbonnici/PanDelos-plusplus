@@ -34,7 +34,7 @@ int main(int argc, char* argv[]){
 
     auto map_sequences_kmers = bbh.get_map_sequences_kmers();
 
-    bbh.calculate_best_hits();
+    //bbh.calculate_best_hits();
 
     auto map_best_hits_2 = bbh.get_map_best_hits();
 

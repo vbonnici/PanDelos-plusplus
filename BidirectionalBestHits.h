@@ -100,42 +100,31 @@ public:
                 std::vector<std::string> sequence_a = split_string(a.first, '\n');
                 std::vector<std::string> sequence_b = split_string(b.first, '\n');
 
-                //std::cout << sequence_a[0] << std::endl;
-
                 counter_min = 0;
                 counter_max = 0;
 
-                if(sequence_a[0] != sequence_b[0]) {
-                    for (int j = 0; j < 1<<18 ; j++) {
-                        std::bitset<18> kmer(j);
-                        //std::cout << kmer << std::endl;
+                std::cout << sequence_a[0] << std::endl;
 
-                        auto result_a = a.second.find(kmer);
-                        auto result_b = b.second.find(kmer);
+                if(sequence_a[0] != sequence_b[0]) {
+
+                    auto a_kmer = a.second;
+                    auto b_kmer = b.second;
+                    for (int j = 0; j < std::max(a_kmer.size(), b_kmer.size()) ; j++) {
 
                         value_a = 0;
                         value_b = 0;
 
-                        if (result_a != a.second.end()) {
-                            if(result_a->first == kmer) {
-                                value_a = result_a->second;
-                                //std::cout << "j " << j << " result_a->second " << result_a->second << std::endl;
-                            }
-                        }
+                        if(j <= a_kmer.size())
+                            value_a = a_kmer[j];
 
-                        if (result_b != b.second.end()) {
-                            if(result_b->first == kmer) {
-                                value_b = result_b->second;
-                                //std::cout << "j " << j << " result_b->second " << result_b->second << std::endl;
-                            }
-                        }
+                        if(j <= b_kmer.size())
+                            value_b = b_kmer[j];
 
                         counter_min += std::min(value_a, value_b);
                         counter_max += std::max(value_a, value_b);
                     }
 
-
-                    //std::cout << "min " << counter_min << " max " << counter_max << std::endl;
+                    std::cout << "min " << counter_min << " max " << counter_max << std::endl;
 
                     jaccard_similarity = (double) counter_min / counter_max;
                     //std::cout << "parte 2 jaccard similarity " << jaccard_similarity << std::endl;
