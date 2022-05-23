@@ -15,6 +15,7 @@ int main(int argc, char* argv[]){
     fire.close();
 
     auto sequences = fire.get_sequences();
+    auto map_sequences_attributes = fire.get_map_sequences_attributes();
 
     PreFilter filter = PreFilter(sequences, 0);
 
@@ -26,7 +27,7 @@ int main(int argc, char* argv[]){
 
     auto map_best_hits = filter.get_map_best_hits();
 
-    BidirectionalBestHits bbh = BidirectionalBestHits(sequences, map_best_hits, 0);
+    BidirectionalBestHits bbh = BidirectionalBestHits(sequences, map_best_hits, map_sequences_attributes, 0);
 
     bbh.init_map_sequences_kmers();
 
@@ -42,8 +43,12 @@ int main(int argc, char* argv[]){
 
     auto map_bidirectional_best_hits = bbh.get_map_bidirectional_best_hits();
 
-    for(auto &i : map_bidirectional_best_hits) 
-        std::cout << i.first << " " << i.second << std::endl;
+    for(auto &i : map_bidirectional_best_hits) {
+        auto second_gene = i.second;
+        auto second_gene_value = second_gene.begin();
+
+        std::cout << i.first << " " << second_gene_value->first << " " << second_gene_value->second << std::endl;
+    }
 
     gettimeofday(&tempo,nullptr); t2 = tempo.tv_sec+(tempo.tv_usec/1000000.0);
 

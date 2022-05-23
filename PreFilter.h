@@ -43,7 +43,7 @@ public:
         std::string sequence_a;
         std::string sequence_b;
 
-        int counter = 0;
+        //int counter = 0;
         for(auto &a : this->map_sequences_kmers) {
             for(auto &b : this->map_sequences_kmers) {
 
@@ -79,8 +79,8 @@ public:
                     temp.insert(std::make_pair(sequence_b, jaccard_similarity));
 
                     this->map_best_hits.insert(std::make_pair(sequence_a, temp));
-                    ++counter;
-                    std::cout << counter << std::endl;
+                    //++counter;
+                    //std::cout << counter << std::endl;
                 }
             }
         }

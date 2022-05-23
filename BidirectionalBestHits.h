@@ -35,7 +35,9 @@ class BidirectionalBestHits {
 public:
     explicit BidirectionalBestHits(const std::vector<std::string>& sequences,
                                    std::unordered_map<std::string, std::unordered_map<std::string, double>>& map_best_hits,
+                                   std::unordered_map<std::string, std::unordered_map<std::string, unsigned int>>& map_sequences_attributes_i,
                                    const int flag) : flag(flag), jaccard_threshold(0.8) {
+        this->map_sequences_attributes = map_sequences_attributes_i;
         this->compute_alphabet(&sequences);
         this->kmer_size = 9; //TODO: scelta di k dinamico
         this->collect_sequences_from_best_hits(&sequences, &map_best_hits);
@@ -138,7 +140,7 @@ public:
                     //std::cout << "min " << counter_min << " max " << counter_max << std::endl;
 
                     jaccard_similarity = (double) counter_min / counter_max;
-                    std::cout << "jaccard similarity " << jaccard_similarity << std::endl;
+                    //std::cout << "jaccard similarity " << jaccard_similarity << std::endl;
 
                     if(isfinite(jaccard_similarity) && jaccard_similarity > this->jaccard_threshold) {
                         std::unordered_map<std::string, double> temp;
@@ -159,6 +161,8 @@ public:
      *
      */
     void calculate_bidirectional_best_hits() {
+        std::unordered_map<std::string, std::string> map_bidirectional_best_hits_internal;
+
         for(auto &gene_a: this->map_best_hits) {
             auto gene_a_best_hits = gene_a.second;
 
@@ -174,35 +178,43 @@ public:
                     if(c != gene_b_best_hits.end() && d != gene_a_best_hits.end()) {
 
                         ///check if a key with gene c already exists
-                        auto temp_a = this->map_bidirectional_best_hits.find(c->first);
+                        auto temp_a = map_bidirectional_best_hits_internal.find(c->first);
 
                         ///check if a value with gene d already exists
-                        auto temp_b = std::find_if(this->map_bidirectional_best_hits.begin(),
-                                                   this->map_bidirectional_best_hits.end(),
+                        auto temp_b = std::find_if(map_bidirectional_best_hits_internal.begin(),
+                                                   map_bidirectional_best_hits_internal.end(),
                                                    [&d](const unmap_string_string_value_type& vt)
                                                     {
                                                         return vt.second == d->first;
                                                     });
                         ///if true, it means that a key and a value already exist for genes c and d
-                        if(temp_a != this->map_bidirectional_best_hits.end() && temp_b != this->map_bidirectional_best_hits.end())
+                        if(temp_a != map_bidirectional_best_hits_internal.end() && temp_b != map_bidirectional_best_hits_internal.end())
                             continue;
 
                         ///perform the same procedure but perform a key-value search with the genes reversed
 
-                        temp_a = this->map_bidirectional_best_hits.find(d->first);
+                        temp_a = map_bidirectional_best_hits_internal.find(d->first);
 
-                        temp_b = std::find_if(this->map_bidirectional_best_hits.begin(),
-                                              this->map_bidirectional_best_hits.end(),
+                        temp_b = std::find_if(map_bidirectional_best_hits_internal.begin(),
+                                              map_bidirectional_best_hits_internal.end(),
                                                     [&c](const unmap_string_string_value_type& vt)
                                                     {
                                                         return vt.second == c->first;
                                                     });
 
-                        if(temp_a != this->map_bidirectional_best_hits.end() && temp_b != this->map_bidirectional_best_hits.end())
+                        if(temp_a != map_bidirectional_best_hits_internal.end() && temp_b != map_bidirectional_best_hits_internal.end())
                             continue;
 
                         ///arrived here means that there is no risk of inserting a duplicate key-value or key-value
-                        this->map_bidirectional_best_hits.insert(std::make_pair(c->first, d->first));
+                        map_bidirectional_best_hits_internal.insert(std::make_pair(c->first, d->first));
+
+                        unsigned int gene_a_id = this->sequence_to_id(c->first);
+                        unsigned int gene_b_id = this->sequence_to_id(d->first);
+
+                        std::unordered_map<unsigned int, double> temp;
+                        temp.insert(std::make_pair(gene_b_id, d->second));
+
+                        this->map_bidirectional_best_hits.insert(std::make_pair(gene_a_id, temp));
                     }
                 }
             }
@@ -236,7 +248,7 @@ public:
         return this->map_best_hits;
     }
 
-    std::unordered_map<std::string, std::string>& get_map_bidirectional_best_hits() {
+    std::unordered_map<unsigned int, std::unordered_map<unsigned int, double>>& get_map_bidirectional_best_hits() {
         return this->map_bidirectional_best_hits;
     }
 
@@ -254,9 +266,10 @@ private:
     const int flag; //0 amino acids, 1 nucleotides
     const double jaccard_threshold;
     std::unordered_set<std::string> sequences;
+    std::unordered_map<std::string, std::unordered_map<std::string, unsigned int>> map_sequences_attributes;
     std::unordered_map<std::string, std::map<std::bitset<18>, int, bitset_comparer<18>>> map_sequences_kmers; //map<sequenza - map<kmer, contatore>>
     std::unordered_map<std::string, std::unordered_map<std::string, double>> map_best_hits; //map<sequence_name1, map<sequence_name2, jaccard>>
-    std::unordered_map<std::string, std::string> map_bidirectional_best_hits; //map<sequence_name1, sequence_name2>
+    std::unordered_map<unsigned int, std::unordered_map<unsigned int, double>> map_bidirectional_best_hits; //map<sequence_name1, map<sequence_name2, jaccard>>
     std::unordered_set<char> alphabet;
 
     [[nodiscard]] bool kmer_is_valid(const std::string &str) const {
@@ -314,14 +327,25 @@ private:
 
             for(auto &b : a.second) {
                 it = std::find_if(sequences_input->begin(), sequences_input->end(), StartsWith(b.first));
-                if (it != sequences_input->end()) {
-                    std::cout << *it << std::endl;
+                if (it != sequences_input->end())
                     this->sequences.insert(*it);
-                }
             }
         }
 
         std::cout << "sequences collected" << std::endl;
+    }
+
+    unsigned int sequence_to_id(const std::string& sequence) {
+        auto map1 = this->map_sequences_attributes.find(sequence);
+
+        if (map1 != this->map_sequences_attributes.end()) {
+            std::unordered_map<std::string, unsigned int> map_attributes = map1->second;
+
+            auto unique_value = map_attributes.begin();
+            return unique_value->second;
+        }
+
+        exit(11);
     }
 
     static std::string aminoacid_to_nucleotides(std::basic_string<char> aminoacid) {
