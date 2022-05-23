@@ -59,13 +59,13 @@ public:
         int counter = 0;
         std::string kmer;
         for(auto &i : this->map_sequences_kmers) {
-            std::vector<std::string> sequence = split_string(i.first, '\n');
+            std::string sequence = i.first;
 
-            for(int window = 0; window < sequence[1].length(); ++window) {
+            for(int window = 0; window < sequence.length(); ++window) {
                 if(this->flag == 1)
-                    kmer = sequence[1].substr(window, this->kmer_size);
+                    kmer = sequence.substr(window, this->kmer_size);
                 else
-                    kmer = BidirectionalBestHits::aminoacid_to_nucleotides(sequence[1].substr(window, 3));
+                    kmer = BidirectionalBestHits::aminoacid_to_nucleotides(sequence.substr(window, 3));
 
                 	//std::cout << kmer << std::endl;
                 if(kmer_is_valid(kmer)) {
@@ -94,16 +94,18 @@ public:
         int counter_min;
         int counter_max;
         double jaccard_similarity;
+        std::string sequence_a;
+        std::string sequence_b;
 
         for(auto &a : this->map_sequences_kmers) {
             for(auto &b : this->map_sequences_kmers) {
-                std::vector<std::string> sequence_a = split_string(a.first, '\n');
-                std::vector<std::string> sequence_b = split_string(b.first, '\n');
+                sequence_a = a.first;
+                sequence_b = b.first;
 
                 counter_min = 0;
                 counter_max = 0;
 
-                if(sequence_a[0] != sequence_b[0]) {
+                if(sequence_a != sequence_b) { //TODO: aggiungere vincoli secondo calcolo bh
                     for (int j = 0; j < 1<<18 ; j++) {
                         std::bitset<18> kmer(j);
                         //std::cout << kmer << std::endl;
@@ -140,9 +142,9 @@ public:
 
                     if(isfinite(jaccard_similarity) && jaccard_similarity > this->jaccard_threshold) {
                         std::unordered_map<std::string, double> temp;
-                        temp.insert(std::make_pair(sequence_b[0], jaccard_similarity));
+                        temp.insert(std::make_pair(sequence_b, jaccard_similarity));
 
-                        this->map_best_hits.insert(std::make_pair(sequence_a[0], temp));
+                        this->map_best_hits.insert(std::make_pair(sequence_a, temp));
                     }
                 }
             }
@@ -215,8 +217,7 @@ public:
      */
     void compute_alphabet(const std::vector<std::string>* sequences_input) {
         for (auto &i: *sequences_input) {
-            std::vector<std::string> sequence = BidirectionalBestHits::split_string(i, '\n');
-            for(char a : sequence[1])
+            for(char a : i)
                 this->alphabet.insert(a);
         }
 
@@ -313,8 +314,10 @@ private:
 
             for(auto &b : a.second) {
                 it = std::find_if(sequences_input->begin(), sequences_input->end(), StartsWith(b.first));
-                if (it != sequences_input->end())
+                if (it != sequences_input->end()) {
+                    std::cout << *it << std::endl;
                     this->sequences.insert(*it);
+                }
             }
         }
 

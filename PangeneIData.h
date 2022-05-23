@@ -43,7 +43,7 @@ public:
                 sequence_name = this->next_string();
                 sequence_description = this->next_string();
             } else {
-                this->sequences.emplace_back(sequence_name + "\n" + this->next_string());
+                this->sequences.emplace_back(this->next_string());
                 this->sequences_name.push_back(sequence_name);
                 auto genomeid_iterator = genomeID.find(genome_name);
 
@@ -177,7 +177,7 @@ private:
     long cursor{};
 
     std::vector<std::string> sequences;
-    std::vector<std::string> sequences_name; //TODO: forse non serve
+    std::vector<std::string> sequences_name;
     std::vector<std::string> sequences_description;
     std::vector<int> sequences_genome;
     std::vector<std::string> genomes_names; //TODO: forse non serve

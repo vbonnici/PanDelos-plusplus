@@ -11,7 +11,6 @@
 #include <array>
 #include <algorithm>
 
-
 class PreFilter {
 public:
 
@@ -41,12 +40,15 @@ public:
         unsigned int counter_min;
         unsigned int counter_max;
         double jaccard_similarity;
+        std::string sequence_a;
+        std::string sequence_b;
 
         int counter = 0;
         for(auto &a : this->map_sequences_kmers) {
             for(auto &b : this->map_sequences_kmers) {
-                std::vector<std::string> sequence_a = PreFilter::split_string(a.first, '\n');
-                std::vector<std::string> sequence_b = PreFilter::split_string(b.first, '\n');
+
+                sequence_a = a.first;
+                sequence_b = b.first;
 
                 counter_min = 0;
                 counter_max = 0;
@@ -74,9 +76,9 @@ public:
 
                 if (std::isfinite(jaccard_similarity) && jaccard_similarity > this->jaccard_threshold) {
                     std::unordered_map<std::string, double> temp;
-                    temp.insert(std::make_pair(sequence_b[0], jaccard_similarity));
+                    temp.insert(std::make_pair(sequence_b, jaccard_similarity));
 
-                    this->map_best_hits.insert(std::make_pair(sequence_a[0], temp));
+                    this->map_best_hits.insert(std::make_pair(sequence_a, temp));
                     ++counter;
                     std::cout << counter << std::endl;
                 }
@@ -143,11 +145,11 @@ private:
         return bitmap;
     }
 
-    static bool check_constraint(std::vector<std::string>& sequence_a, std::vector<std::string>& sequence_b) {
-        if(sequence_a[0] == sequence_b[0])
+    static bool check_constraint(std::string& sequence_a, std::string& sequence_b) {
+        if(sequence_a == sequence_b)
             return false;
 
-        if(sequence_a[0].length() >= sequence_b[0].length()*2 || sequence_b[0].length() >= sequence_a[0].length()*2)
+        if(sequence_a.length() >= sequence_b.length()*2 || sequence_b.length() >= sequence_a.length()*2)
             return false;
 
         return true;
@@ -155,10 +157,10 @@ private:
 
     void calculate_kmer_multiplicity_nucleotides() {
         for(auto &i : this->map_sequences_kmers) {
-            std::vector<std::string> sequence = PreFilter::split_string(i.first, '\n');
+            std::string sequence = i.first;
 
-            for(int window = 0; window < sequence[1].length(); ++window) {
-                std::string kmer = sequence[1].substr(window, this->kmer_size);
+            for(int window = 0; window < sequence.length(); ++window) {
+                std::string kmer = sequence.substr(window, this->kmer_size);
 
                 if(kmer_is_valid(kmer)) {
                     int kmer_in_int = PreFilter::kmer_to_int(kmer);
@@ -171,10 +173,10 @@ private:
 
     void calculate_kmer_multiplicity_aminoacids() {
         for(auto &i : this->map_sequences_kmers) {
-            std::vector<std::string> sequence = PreFilter::split_string(i.first, '\n');
+            std::string sequence = i.first;
 
-            for(int window = 0; window < sequence[1].length(); ++window) {
-                std::string aminoacid = sequence[1].substr(window, 2);
+            for(int window = 0; window < sequence.length(); ++window) {
+                std::string aminoacid = sequence.substr(window, 2);
                 std::string kmer = PreFilter::aminoacid_to_nucleotides(aminoacid);
 
                 if(kmer_is_valid(kmer)) {
