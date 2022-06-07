@@ -15,17 +15,19 @@ int main(int argc, char* argv[]){
     fire.close();
 
     auto sequences = fire.get_sequences();
-    auto map_sequences_attributes = fire.get_map_sequences_attributes();
+    //auto map_sequences_attributes = fire.get_map_sequences_attributes();
+    auto sequences_name = fire.get_sequences_name();
+    auto genome_sequencesid = fire.get_genome_sequencesid();
 
-    PreFilter filter = PreFilter(sequences, 1);
+    PreFilter filter = PreFilter(sequences, genome_sequencesid, 1);
 
-    filter.init_map_sequences_kmers();
+    filter.init_sequences_kmers();
 
     filter.calculate_kmer_multiplicity();
 
-    filter.calculate_best_hits();
+    filter.calculate_best_hits_v2();
 
-    auto map_best_hits = filter.get_map_best_hits();
+    auto best_hits = filter.get_best_hits();
 
     return 0;
 

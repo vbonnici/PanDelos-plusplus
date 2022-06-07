@@ -14,16 +14,17 @@
 class PreFilter {
 public:
 
-    explicit PreFilter(const std::vector<std::string>& sequences, const int flag) :
+    explicit PreFilter(const std::vector<std::string>& sequences, const std::vector<std::vector<int>>& genome_sequencesid, const int flag) :
         jaccard_threshold(0.8), flag(flag), kmer_size(6) {
         this->sequences = &sequences;
+        this->genome_sequencesid = &genome_sequencesid;
     }
 
-    void init_map_sequences_kmers() {
+    void init_sequences_kmers() {
         for(auto &sequence: *this->sequences) {
             std::array<unsigned int, 4095> array{0};
 
-            this->map_sequences_kmers.insert(std::make_pair(sequence, array));
+            this->sequences_kmers.emplace_back(array);
         }
     }
 
@@ -34,7 +35,7 @@ public:
             this->calculate_kmer_multiplicity_nucleotides();
     }
 
-    void calculate_best_hits() {
+    void calculate_best_hits_v2() {
         unsigned int value_a;
         unsigned int value_b;
         unsigned int counter_min;
@@ -43,65 +44,69 @@ public:
         std::string sequence_a;
         std::string sequence_b;
 
-        //int counter = 0;
-        for(auto &a : this->map_sequences_kmers) {
-            for(auto &b : this->map_sequences_kmers) {
+        int index ;
 
+        for(index = 0; index < this->genome_sequencesid->size(); ++index) {
+            for(int i = index + 1; i < this->genome_sequencesid->size(); ++i) {
 
-                sequence_a = a.first;
-                sequence_b = b.first;
+                std::vector<int> genome_a = this->genome_sequencesid->operator[](index);
+                std::vector<int> genome_b = this->genome_sequencesid->operator[](i);
 
-                counter_min = 0;
-                counter_max = 0;
+                for(auto & a: genome_a)
+                    for(auto & b : genome_b) {
 
+                        sequence_a = this->sequences->operator[](a);
+                        sequence_b = this->sequences->operator[](b);
 
-                if (!PreFilter::check_constraint(sequence_a, sequence_b))
-                    continue;
+                        counter_min = 0;
+                        counter_max = 0;
 
-                for (int j = 0; j < 4095; ++j) {
+                        std::array<unsigned int, 4095> kmer_array_a = this->sequences_kmers.operator[](a);
+                        std::array<unsigned int, 4095> kmer_array_b = this->sequences_kmers.operator[](b);
 
-                    value_a = a.second[j];
-                    value_b = b.second[j];
+                        if (!PreFilter::check_constraint(sequence_a, sequence_b))
+                            continue;
 
-                    //std::cout << "sequence_a " << sequence_a[0] << " sequence_b " << sequence_b[0] << std::endl;
-                    //std::cout << "value_a " << value_a << " value_b " << value_b << std::endl;
+                        for (int j = 0; j < 4095; ++j) {
 
-                    if(value_a > value_b) {
-                        counter_min += value_b;
-                        counter_max += value_a;
+                            value_a = kmer_array_a[j];
+                            value_b = kmer_array_b[j];
+
+                            //std::cout << "value_a " << value_a << " value_b " << value_b << std::endl;
+
+                            if(value_a > value_b) {
+                                counter_min += value_b;
+                                counter_max += value_a;
+                            }
+                            else {
+                                counter_min += value_a;
+                                counter_max += value_b;
+                            }
+
+                            //std::cout << "min " << counter_min << " max " << counter_max << std::endl;
+
+                        }
+
+                        jaccard_similarity = (double) counter_min / counter_max;
+                        //std::cout << "prefilter jaccard similarity " << jaccard_similarity << std::endl;
+
+                        if (counter_max > 0 && jaccard_similarity > this->jaccard_threshold) {
+                            this->best_hits.emplace_back(std::make_pair(a, b));
+                            //std::cout << a << " best hit con " << b << std::endl;
+                        }
                     }
-                    else {
-                        counter_min += value_a;
-                        counter_max += value_b;
-                    }
-
-                    //std::cout << "min " << counter_min << " max " << counter_max << std::endl;
-
-                }
-
-                jaccard_similarity = (double) counter_min / counter_max;
-                //std::cout << "prefilter jaccard similarity " << jaccard_similarity << std::endl;
-
-                if (counter_max > 0 && jaccard_similarity > this->jaccard_threshold) {
-                    std::unordered_map<std::string, double> temp;
-                    temp.insert(std::make_pair(sequence_b, jaccard_similarity));
-
-                    this->map_best_hits.insert(std::make_pair(sequence_a, temp));
-                    //++counter;
-                    //std::cout << counter << std::endl;
-                }
-
             }
         }
+
         std::cout << "prefilter best hits calcolati " << std::endl;
     }
 
-    std::unordered_map<std::string, std::array<unsigned int, 4095>>& get_map_sequences_kmers() {
-        return this->map_sequences_kmers;
+    std::vector<std::array<unsigned int, 4095>>& get_sequences_kmers() {
+        return this->sequences_kmers;
     }
 
-    std::unordered_map<std::string, std::unordered_map<std::string, double>>& get_map_best_hits() {
-        return this->map_best_hits;
+    std::vector<std::pair<int, int>>& get_best_hits() {
+        return this->best_hits;
     }
 
 private:
@@ -109,8 +114,9 @@ private:
     const int flag; //0 amino acids, 1 nucleotides
     const int kmer_size;
     const std::vector<std::string>* sequences;
-    std::unordered_map<std::string, std::array<unsigned int, 4095>> map_sequences_kmers;
-    std::unordered_map<std::string, std::unordered_map<std::string, double>> map_best_hits;
+    const std::vector<std::vector<int>>* genome_sequencesid;
+    std::vector<std::array<unsigned int, 4095>> sequences_kmers;
+    std::vector<std::pair<int, int>> best_hits;
 
     [[nodiscard]] bool kmer_is_valid(const std::string &str) const {
         return str.length() == this->kmer_size && str.find_first_not_of("ACGT") == std::string::npos;
@@ -165,8 +171,9 @@ private:
     }
 
     void calculate_kmer_multiplicity_nucleotides() {
-        for(auto &i : this->map_sequences_kmers) {
-            std::string sequence = i.first;
+        for(int k = 0; k < this->sequences_kmers.size(); ++k) {
+
+            std::string sequence = this->sequences->operator[](k);
 
             for(int window = 0; window < sequence.length() - this->kmer_size + 1; window++) {
                 std::string kmer = sequence.substr(window, this->kmer_size);
@@ -174,23 +181,16 @@ private:
                 if(kmer_is_valid(kmer)) {
                     int kmer_in_int = PreFilter::kmer_to_int(kmer);
 
-                    i.second[kmer_in_int] += 1;
+                    this->sequences_kmers.operator[](k).operator[](kmer_in_int) += 1;
                 }
             }
-
-            /*int counter = 0;
-            for(int a = 0; a <= 4095; a++) {
-                if(i.second[a] == 0)
-                    counter++;
-            }
-
-            std::cout << "# " << counter << std::endl;*/
         }
     }
 
     void calculate_kmer_multiplicity_aminoacids() {
-        for(auto &i : this->map_sequences_kmers) {
-            std::string sequence = i.first;
+        for(int k = 0; k < this->sequences_kmers.size(); ++k) {
+
+            std::string sequence = this->sequences->operator[](k);
 
             for(int window = 0; window < sequence.length() - this->kmer_size + 1; window++) {
                 std::string aminoacid = sequence.substr(window, 2);
@@ -199,7 +199,7 @@ private:
                 if(kmer_is_valid(kmer)) {
                     int kmer_in_int = PreFilter::kmer_to_int(kmer);
 
-                    i.second[kmer_in_int] += 1;
+                    this->sequences_kmers.operator[](k).operator[](kmer_in_int) += 1;
                 }
             }
         }
