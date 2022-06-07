@@ -21,7 +21,8 @@ public:
     }
 
     void init_sequences_kmers() {
-        for(auto &sequence: *this->sequences) {
+        this->sequences_kmers.reserve(this->sequences->size());
+        for(int i = 0; i < this->sequences->size(); ++i) {
             std::array<unsigned int, 4095> array{0};
 
             this->sequences_kmers.emplace_back(array);

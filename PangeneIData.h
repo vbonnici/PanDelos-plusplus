@@ -163,6 +163,14 @@ public:
         return this->genome_sequencesid;
     }
 
+    /*std::unordered_map<std::string, unsigned int>& get_sequences_name_id() {
+        return this->sequences_name_id;
+    }*/
+
+    std::unordered_map<std::string, std::unordered_map<std::string, unsigned int>>& get_map_sequences_attributes() {
+        return this->map_sequences_attributes;
+    }
+
     /*
      * Method that encapsulates the call to fclose () function which dissociates the named stream from its underlying
      * and free () which frees the memory occupied by the buffer
@@ -198,6 +206,7 @@ private:
     std::vector<std::string> sequences;
     std::vector<std::string> sequences_name;
     std::vector<std::vector<int>> genome_sequencesid;
+    std::unordered_map<std::string, std::unordered_map<std::string, unsigned int>> map_sequences_attributes;
     std::vector<std::string> sequences_description;
     std::vector<int> sequences_genome;
     std::vector<std::string> genomes_names; //TODO: forse non serve
