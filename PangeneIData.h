@@ -6,6 +6,7 @@
 #include <string>
 #include <vector>
 #include <map>
+#include <set>
 #include <unordered_set>
 #include <unordered_map>
 #include <cstring>
@@ -36,7 +37,10 @@ public:
         std::string genome_name, sequence_name, sequence_description;
         std::map<std::string, int> genomeID;
         int genomeid;
-        int counter = 0;
+        std::string genome_name_old;
+        std::vector<int> temp_vector;
+        int counter_sequence = 0;
+        bool new_genome = false;
 
         while (this->is_valid()) {
             if (nameline) {
@@ -46,10 +50,21 @@ public:
             } else {
                 std::string sequence = this->next_string();
                 this->sequences.emplace_back(sequence);
-                this->sequences_name_id.insert(std::make_pair(sequence_name, counter));
-                ++counter;
+                this->sequences_name.emplace_back(sequence_name);
 
-                this->map_sequences_attributes.insert(std::make_pair(sequence, this->sequences_name_id));
+                if(genome_name != genome_name_old) {
+                    if(new_genome) {
+                        this->genome_sequencesid.emplace_back(temp_vector);
+                        temp_vector.clear();
+                    }
+
+                    temp_vector.emplace_back(counter_sequence);
+                    genome_name_old = genome_name;
+                    new_genome = true;
+                } else {
+                        temp_vector.emplace_back(counter_sequence);
+                }
+                ++counter_sequence;
 
                 auto genomeid_iterator = genomeID.find(genome_name);
 
@@ -66,6 +81,8 @@ public:
 
             nameline = !nameline;
         }
+
+        this->genome_sequencesid.emplace_back(temp_vector);
 
         this->genomes_names.reserve(genomeID.size());
         for (auto &it: genomeID)
@@ -120,8 +137,8 @@ public:
      *
      * @param[out] std::vector<std::string>&
      */
-    std::unordered_map<std::string, unsigned int>& get_sequences_name() {
-        return this->sequences_name_id;
+    std::vector<std::string>& get_sequences_name() {
+        return this->sequences_name;
     }
 
     /*
@@ -142,12 +159,8 @@ public:
         return this->sequences;
     }
 
-    /*std::unordered_map<std::string, unsigned int>& get_sequences_name_id() {
-        return this->sequences_name_id;
-    }*/
-
-    std::unordered_map<std::string, std::unordered_map<std::string, unsigned int>>& get_map_sequences_attributes() {
-        return this->map_sequences_attributes;
+    std::vector<std::vector<int>>& get_genome_sequencesid() {
+        return this->genome_sequencesid;
     }
 
     /*
@@ -183,8 +196,8 @@ private:
     long cursor{};
 
     std::vector<std::string> sequences;
-    std::unordered_map<std::string, unsigned int> sequences_name_id;
-    std::unordered_map<std::string, std::unordered_map<std::string, unsigned int>> map_sequences_attributes;
+    std::vector<std::string> sequences_name;
+    std::vector<std::vector<int>> genome_sequencesid;
     std::vector<std::string> sequences_description;
     std::vector<int> sequences_genome;
     std::vector<std::string> genomes_names; //TODO: forse non serve
