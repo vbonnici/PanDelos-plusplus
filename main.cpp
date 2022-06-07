@@ -17,7 +17,7 @@ int main(int argc, char* argv[]){
     auto sequences = fire.get_sequences();
     auto map_sequences_attributes = fire.get_map_sequences_attributes();
 
-    PreFilter filter = PreFilter(sequences, 0);
+    PreFilter filter = PreFilter(sequences, 1);
 
     filter.init_map_sequences_kmers();
 
@@ -27,7 +27,9 @@ int main(int argc, char* argv[]){
 
     auto map_best_hits = filter.get_map_best_hits();
 
-    BidirectionalBestHits bbh = BidirectionalBestHits(sequences, map_best_hits, map_sequences_attributes, 0);
+    return 0;
+
+    /*BidirectionalBestHits bbh = BidirectionalBestHits(sequences, map_best_hits, map_sequences_attributes, 1);
 
     bbh.init_map_sequences_kmers();
 
@@ -54,6 +56,5 @@ int main(int argc, char* argv[]){
 
     std::cout << "Tempo computazione: " << t2-t1 << std::endl;
 
-    return 0;
-
+*/
 };

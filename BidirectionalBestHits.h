@@ -142,7 +142,7 @@ public:
                     jaccard_similarity = (double) counter_min / counter_max;
                     //std::cout << "jaccard similarity " << jaccard_similarity << std::endl;
 
-                    if(isfinite(jaccard_similarity) && jaccard_similarity > this->jaccard_threshold) {
+                    if(std::isfinite(jaccard_similarity) && jaccard_similarity > this->jaccard_threshold) {
                         std::unordered_map<std::string, double> temp;
                         temp.insert(std::make_pair(sequence_b, jaccard_similarity));
 

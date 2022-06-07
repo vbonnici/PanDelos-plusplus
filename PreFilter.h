@@ -47,11 +47,13 @@ public:
         for(auto &a : this->map_sequences_kmers) {
             for(auto &b : this->map_sequences_kmers) {
 
+
                 sequence_a = a.first;
                 sequence_b = b.first;
 
                 counter_min = 0;
                 counter_max = 0;
+
 
                 if (!PreFilter::check_constraint(sequence_a, sequence_b))
                     continue;
@@ -64,8 +66,14 @@ public:
                     //std::cout << "sequence_a " << sequence_a[0] << " sequence_b " << sequence_b[0] << std::endl;
                     //std::cout << "value_a " << value_a << " value_b " << value_b << std::endl;
 
-                    counter_min += std::min(value_a, value_b);
-                    counter_max += std::max(value_a, value_b);
+                    if(value_a > value_b) {
+                        counter_min += value_b;
+                        counter_max += value_a;
+                    }
+                    else {
+                        counter_min += value_a;
+                        counter_max += value_b;
+                    }
 
                     //std::cout << "min " << counter_min << " max " << counter_max << std::endl;
 
@@ -74,7 +82,7 @@ public:
                 jaccard_similarity = (double) counter_min / counter_max;
                 //std::cout << "prefilter jaccard similarity " << jaccard_similarity << std::endl;
 
-                if (std::isfinite(jaccard_similarity) && jaccard_similarity > this->jaccard_threshold) {
+                if (counter_max > 0 && jaccard_similarity > this->jaccard_threshold) {
                     std::unordered_map<std::string, double> temp;
                     temp.insert(std::make_pair(sequence_b, jaccard_similarity));
 
@@ -82,6 +90,7 @@ public:
                     //++counter;
                     //std::cout << counter << std::endl;
                 }
+
             }
         }
         std::cout << "prefilter best hits calcolati " << std::endl;
@@ -159,7 +168,7 @@ private:
         for(auto &i : this->map_sequences_kmers) {
             std::string sequence = i.first;
 
-            for(int window = 0; window < sequence.length(); ++window) {
+            for(int window = 0; window < sequence.length() - this->kmer_size + 1; window++) {
                 std::string kmer = sequence.substr(window, this->kmer_size);
 
                 if(kmer_is_valid(kmer)) {
@@ -168,6 +177,14 @@ private:
                     i.second[kmer_in_int] += 1;
                 }
             }
+
+            /*int counter = 0;
+            for(int a = 0; a <= 4095; a++) {
+                if(i.second[a] == 0)
+                    counter++;
+            }
+
+            std::cout << "# " << counter << std::endl;*/
         }
     }
 
@@ -175,7 +192,7 @@ private:
         for(auto &i : this->map_sequences_kmers) {
             std::string sequence = i.first;
 
-            for(int window = 0; window < sequence.length(); ++window) {
+            for(int window = 0; window < sequence.length() - this->kmer_size + 1; window++) {
                 std::string aminoacid = sequence.substr(window, 2);
                 std::string kmer = PreFilter::aminoacid_to_nucleotides(aminoacid);
 
