@@ -41,13 +41,20 @@ int main(int argc, char* argv[]){
     bbh.calculate_bbh();
 
     auto map_bidirectional_best_hits = bbh.get_map_bidirectional_best_hits();
-
+    auto vector_tuple_bbh = bbh.get_vector_tuple_bbh();
 
     for(auto &i : map_bidirectional_best_hits) {
         auto second_gene = i.second;
         auto second_gene_value = second_gene.begin();
 
         std::cout << i.first << " " << second_gene_value->first << " " << second_gene_value->second << std::endl;
+    }
+
+    std::cout << "*********" << std::endl;
+
+    for(auto &i : vector_tuple_bbh) {
+
+        std::cout << std::get<0>(i) << " " << std::get<1>(i) << " " << std::get<2>(i) << std::endl;
     }
 
     gettimeofday(&tempo,nullptr); t2 = tempo.tv_sec+(tempo.tv_usec/1000000.0);

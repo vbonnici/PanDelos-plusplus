@@ -176,6 +176,23 @@ public:
                         temp.insert(std::make_pair(id_gene_b, jaccard));
 
                         this->map_bidirectional_best_hits.insert(std::make_pair(id_gene_a, temp));
+
+
+                        auto it3 = std::find_if(this->vector_tuple_bbh.begin(),
+                                                this->vector_tuple_bbh.end(),
+                                                [&id_gene_a, &id_gene_b, &jaccard](const std::tuple<int,int,double>& e) {
+                                                            return (std::get<0>(e) == id_gene_a &&
+                                                                    std::get<1>(e) == id_gene_b &&
+                                                                    std::get<2>(e) == jaccard) ||
+                                                                    (std::get<0>(e) == id_gene_b &&
+                                                                     std::get<1>(e) == id_gene_a &&
+                                                                     std::get<2>(e) == jaccard);
+                                                });
+
+
+                        if(it3 == this->vector_tuple_bbh.end())
+                            this->vector_tuple_bbh.emplace_back(std::make_tuple(id_gene_a, id_gene_b, jaccard));
+
                     }
                 }
             }
@@ -286,6 +303,10 @@ public:
         return this->map_bidirectional_best_hits;
     }
 
+    std::vector<std::tuple<int, int, double>>& get_vector_tuple_bbh() {
+        return this->vector_tuple_bbh;
+    }
+
     /*
      * Getter which returns the unsorted set containing the alphabet obtained from all genes in the .faa file
      *
@@ -307,6 +328,7 @@ private:
     std::unordered_map<int, std::unordered_map<int, double>> map_hits;
     std::unordered_map<int, std::unordered_map<int, double>> map_best_hits;
     std::unordered_map<int, std::unordered_map<int, double>> map_bidirectional_best_hits;
+    std::vector<std::tuple<int, int, double>> vector_tuple_bbh;
 
     [[nodiscard]] bool kmer_is_valid(const std::string &str) const {
         return str.length() == this->kmer_size && str.find_first_not_of("ACGT") == std::string::npos; //TODO: aggiungere test di validità per amminoacidi
@@ -354,6 +376,11 @@ private:
         this->sequences.reserve(temp_sequences.size());
         this->sequences.assign(temp_sequences.begin(), temp_sequences.end());
 
+        unsigned long genes_lenght = 0;
+        for(auto &i : this->sequences)
+            genes_lenght += i.length();
+
+        std::cout << genes_lenght << std::endl;
     }
 
     void compute_best_hits() {
