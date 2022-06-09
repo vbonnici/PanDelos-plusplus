@@ -15,7 +15,7 @@ class PreFilter {
 public:
 
     explicit PreFilter(const std::vector<std::string>& sequences, const std::vector<std::vector<int>>& genome_sequencesid, const int flag) :
-        jaccard_threshold(0.5), flag(flag), kmer_size(6) {
+        jaccard_threshold(0.8), flag(flag), kmer_size(6) {
         this->sequences = &sequences;
         this->genome_sequencesid = &genome_sequencesid;
     }
