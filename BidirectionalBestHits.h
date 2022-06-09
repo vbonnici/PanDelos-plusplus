@@ -11,56 +11,44 @@
 #include <unordered_set>
 #include <algorithm>
 
-
-
 template<size_t sz> struct bitset_comparer {
     bool operator() (const std::bitset<sz> &b1, const std::bitset<sz> &b2) const {
         return b1.to_ulong() < b2.to_ulong();
     }
 };
 
-typedef std::unordered_map<std::string, std::string>::value_type unmap_string_string_value_type;
-
-struct StartsWith {
-    const std::string val;
-
-    StartsWith(const std::string &s) : val(s) {}
-
-    bool operator()(const std::string &in) const {
-        return in.find(val) == 0;
-    }
-};
-
 class BidirectionalBestHits {
 public:
     explicit BidirectionalBestHits(const std::vector<std::string>& sequences,
-                                   std::unordered_map<std::string, std::unordered_map<std::string, double>>& map_best_hits,
-                                   std::unordered_map<std::string, std::unordered_map<std::string, unsigned int>>& map_sequences_attributes_i,
-                                   const int flag) : flag(flag), jaccard_threshold(0.8) {
-        this->map_sequences_attributes = map_sequences_attributes_i;
+                                   std::vector<std::pair<int, int>>& best_hits,
+                                   std::vector<std::vector<int>>& genome_sequenceid,
+                                   const int flag) : flag(flag) {
+        this->collect_sequences_from_best_hits(&sequences, &best_hits);
         this->compute_alphabet(&sequences);
-        this->kmer_size = 9; //TODO: scelta di k dinamico
-        this->collect_sequences_from_best_hits(&sequences, &map_best_hits);
+        this->compute_kmer_size();
+        this->best_hits_prefilter = &best_hits;
+        this->sequences_prefilter = &sequences;
+        this->genome_sequenceid = &genome_sequenceid;
     }
 
     /*
      * initializes a map for each sequence with the first k-mer and the counter at 0
      */
-    void init_map_sequences_kmers() {
+    void init_sequences_kmers() {
+
         for(auto &sequence: this->sequences) {
 
             std::map<std::bitset<18>, int, bitset_comparer<18>> temp;
 
             temp.insert(std::make_pair("00000000000000000000", 0));
 
-            this->map_sequences_kmers.insert(std::make_pair(sequence, temp));
+            this->sequences_kmers.insert(std::make_pair(sequence, temp));
         }
     }
 
     void calculate_kmer_multiplicity() {
-        int counter = 0;
         std::string kmer;
-        for(auto &i : this->map_sequences_kmers) {
+        for(auto &i : this->sequences_kmers) {
             std::string sequence = i.first;
 
             for(int window = 0; window < sequence.length(); ++window) {
@@ -69,11 +57,8 @@ public:
                 else
                     kmer = BidirectionalBestHits::aminoacid_to_nucleotides(sequence.substr(window, 3));
 
-                	//std::cout << kmer << std::endl;
                 if(kmer_is_valid(kmer)) {
-                    //std::cout << kmer << std::endl;
                     std::bitset<18> kmer_in_bit = kmer_to_bit(kmer);
-                    //std::cout << kmer_in_bit << std::endl;
 
                     auto result = i.second.find(kmer_in_bit);
 
@@ -83,173 +68,160 @@ public:
                         result->second += 1;
                 }
             }
-            //++counter;
-            //std::cout << sequence[0] << counter << std::endl;
         }
 
-        std::cout << "kmer_multiplicity calcolate" << std::endl;
+        std::cout << "2 - kmer_multiplicity calcolate" << std::endl;
     }
 
     void calculate_best_hits() {
-        int value_a;
-        int value_b;
-        int counter_min;
-        int counter_max;
+        unsigned int value_a;
+        unsigned int value_b;
+        unsigned int counter_min;
+        unsigned int counter_max;
         double jaccard_similarity;
         std::string sequence_a;
         std::string sequence_b;
 
-        for(auto &a : this->map_sequences_kmers) {
-            for(auto &b : this->map_sequences_kmers) {
-                sequence_a = a.first;
-                sequence_b = b.first;
+        for (auto &i: *this->best_hits_prefilter) {
+            this->map_hits.insert(std::make_pair(i.first, std::unordered_map<int, double>()));
+            this->map_hits.insert(std::make_pair(i.second, std::unordered_map<int, double>()));
+        }
 
-                counter_min = 0;
-                counter_max = 0;
+        for (auto &i: *this->best_hits_prefilter) {
+            int id_gene_a = i.first;
+            int id_gene_b = i.second;
 
-                if(sequence_a != sequence_b) { //TODO: aggiungere vincoli secondo calcolo bh
-                    for (int j = 0; j < 1<<18 ; j++) {
-                        std::bitset<18> kmer(j);
-                        //std::cout << kmer << std::endl;
+            sequence_a = this->sequences_prefilter->operator[](id_gene_a);
+            sequence_b = this->sequences_prefilter->operator[](id_gene_b);
 
-                        auto result_a = a.second.find(kmer);
-                        auto result_b = b.second.find(kmer);
+            counter_min = 0;
+            counter_max = 0;
 
-                        value_a = 0;
-                        value_b = 0;
+            auto kmer_key_a = this->sequences_kmers.find(sequence_a);
+            auto kmer_key_b = this->sequences_kmers.find(sequence_b);
 
-                        if (result_a != a.second.end()) {
-                            if(result_a->first == kmer) {
-                                value_a = result_a->second;
-                                //std::cout << "j " << j << " result_a->second " << result_a->second << std::endl;
-                            }
-                        }
+            for (int j = 0; j < 1 << 18; j++) {
+                std::bitset<18> kmer(j);
 
-                        if (result_b != b.second.end()) {
-                            if(result_b->first == kmer) {
-                                value_b = result_b->second;
-                                //std::cout << "j " << j << " result_b->second " << result_b->second << " value_b " << value_b << std::endl;
-                            }
-                        }
+                auto result_a = kmer_key_a->second.find(kmer);
+                auto result_b = kmer_key_b->second.find(kmer);
 
-                        counter_min += std::min(value_a, value_b);
-                        counter_max += std::max(value_a, value_b);
-                    }
+                value_a = 0;
+                value_b = 0;
+
+                if (result_a != kmer_key_a->second.end())
+                    if (result_a->first == kmer)
+                        value_a = result_a->second;
 
 
-                    //std::cout << "min " << counter_min << " max " << counter_max << std::endl;
+                if (result_b != kmer_key_b->second.end())
+                    if (result_b->first == kmer)
+                        value_b = result_b->second;
 
-                    jaccard_similarity = (double) counter_min / counter_max;
-                    //std::cout << "jaccard similarity " << jaccard_similarity << std::endl;
-
-                    if(std::isfinite(jaccard_similarity) && jaccard_similarity > this->jaccard_threshold) {
-                        std::unordered_map<std::string, double> temp;
-                        temp.insert(std::make_pair(sequence_b, jaccard_similarity));
-
-                        this->map_best_hits.insert(std::make_pair(sequence_a, temp));
-                    }
+                if(value_a > value_b) {
+                    counter_min += value_b;
+                    counter_max += value_a;
+                }
+                else {
+                    counter_min += value_a;
+                    counter_max += value_b;
                 }
             }
+
+            jaccard_similarity = (double) counter_min / counter_max;
+            //std::cout << "2 - jaccard similarity " << jaccard_similarity << std::endl;
+
+            if (counter_max > 0) {
+                this->map_hits[id_gene_a].insert(std::make_pair(id_gene_b, jaccard_similarity));
+                this->map_hits[id_gene_b].insert(std::make_pair(id_gene_a, jaccard_similarity));
+            }
         }
-        std::cout << "seconda parte best hits calcolati " << std::endl;
+
+        this->compute_best_hits();
+
+        std::cout << "2 - best hits calcolati " << std::endl;
     }
 
     /*
-     * Per ogni occorrenza della mappa, se il gene è diverso, confrontiamo 2 occorrenze alla volta (seconda parte mappa)
-     * Cerchiamo ogni occorrenza di questa seconda parte del PRIMO GENE nella seconda parte della mappa del SECONDO GENE
-     * Poi lo facciamo al contrario. Se c'è corrispondenza aggiungiamo questo nuovo bbh alla lista
      *
-     */
-    void calculate_bidirectional_best_hits() {
-        std::unordered_map<std::string, std::string> map_bidirectional_best_hits_internal;
+     *  Date:
+     *  A chiave di map_best_hits   (gene A)
+     *  B valore di map_best_hits   (mappa C)
+     *  D chiave di C               (gene D)
+     *  E valore di C               (double)
+     *
+     *  Schema: map_best_hits< A, C<D, E> >
+     *
+     *  Si definisce un BIDIRECTIONAL BEST HITS, se esiste, una coppia di geni tale per cui:
+     *
+     *  per una chiave A, nella sua mappa C esiste un gene D che visto come una delle chiavi di map_best_hits,
+     *  contiene nella sua mappa C una chiave uguale ad A.
+    */
+    void calculate_bbh() {
+        for(auto &map : this->map_best_hits) {
+            int id_gene_a = map.first;
 
-        for(auto &gene_a: this->map_best_hits) {
-            auto gene_a_best_hits = gene_a.second;
+            for(auto &submap : map.second) {
+                int id_gene_b = submap.first;
+                double jaccard = submap.second;
 
-            for(auto &gene_b: this->map_best_hits) {
-                auto gene_b_best_hits = gene_b.second;
+                //it: chiave uguale a gene_b
+                auto it = std::find_if(this->map_best_hits.begin(), this->map_best_hits.end(),
+                                       [&id_gene_b](const auto& key){ return key.first == id_gene_b;});
 
-                if(gene_a.first != gene_b.first) {
+                if(it != this->map_best_hits.end()) {
 
-                    auto c = gene_b_best_hits.find(gene_a.first);
-                    auto d = gene_a_best_hits.find(gene_b.first);
+                    //cerca il gene a come chiave della mappa di it (it->second)
+                    auto it2 = std::find_if(it->second.begin(), it->second.end(),
+                                            [&id_gene_a](const auto& key){ return key.first == id_gene_a;});
 
-                    /// if true, gene_a is a best hit of gene_b and vicevers
-                    if(c != gene_b_best_hits.end() && d != gene_a_best_hits.end()) {
+                    if(it2 != it->second.end()) {
 
-                        ///check if a key with gene c already exists
-                        auto temp_a = map_bidirectional_best_hits_internal.find(c->first);
+                        auto it3 = std::find_if(this->vector_tuple_bbh.begin(),
+                                                this->vector_tuple_bbh.end(),
+                                                [&id_gene_a, &id_gene_b, &jaccard](const std::tuple<int,int,double>& e) {
+                                                            return (std::get<0>(e) == id_gene_a &&
+                                                                    std::get<1>(e) == id_gene_b &&
+                                                                    std::get<2>(e) == jaccard) ||
+                                                                    (std::get<0>(e) == id_gene_b &&
+                                                                     std::get<1>(e) == id_gene_a &&
+                                                                     std::get<2>(e) == jaccard);
+                                                });
 
-                        ///check if a value with gene d already exists
-                        auto temp_b = std::find_if(map_bidirectional_best_hits_internal.begin(),
-                                                   map_bidirectional_best_hits_internal.end(),
-                                                   [&d](const unmap_string_string_value_type& vt)
-                                                    {
-                                                        return vt.second == d->first;
-                                                    });
-                        ///if true, it means that a key and a value already exist for genes c and d
-                        if(temp_a != map_bidirectional_best_hits_internal.end() && temp_b != map_bidirectional_best_hits_internal.end())
-                            continue;
 
-                        ///perform the same procedure but perform a key-value search with the genes reversed
+                        if(it3 == this->vector_tuple_bbh.end())
+                            this->vector_tuple_bbh.emplace_back(std::make_tuple(id_gene_a, id_gene_b, jaccard));
 
-                        temp_a = map_bidirectional_best_hits_internal.find(d->first);
-
-                        temp_b = std::find_if(map_bidirectional_best_hits_internal.begin(),
-                                              map_bidirectional_best_hits_internal.end(),
-                                                    [&c](const unmap_string_string_value_type& vt)
-                                                    {
-                                                        return vt.second == c->first;
-                                                    });
-
-                        if(temp_a != map_bidirectional_best_hits_internal.end() && temp_b != map_bidirectional_best_hits_internal.end())
-                            continue;
-
-                        ///arrived here means that there is no risk of inserting a duplicate key-value or key-value
-                        map_bidirectional_best_hits_internal.insert(std::make_pair(c->first, d->first));
-
-                        unsigned int gene_a_id = this->sequence_to_id(c->first);
-                        unsigned int gene_b_id = this->sequence_to_id(d->first);
-
-                        std::unordered_map<unsigned int, double> temp;
-                        temp.insert(std::make_pair(gene_b_id, d->second));
-
-                        this->map_bidirectional_best_hits.insert(std::make_pair(gene_a_id, temp));
                     }
                 }
             }
         }
 
-        std::cout << "bbh calcolati" << std::endl;
+        std::cout << "2 - bidirectional best hits calcolati" << std::endl;
     }
 
-    /*
-     * For each gene sequence, it inserts each character of which it is composed into an unordered set
-     * (if not yet present)
-     */
-    void compute_alphabet(const std::vector<std::string>* sequences_input) {
-        for (auto &i: *sequences_input) {
-            for(char a : i)
-                this->alphabet.insert(a);
-        }
-
-        std::cout << "alfabeto calcolato" << std::endl;
-    }
-
-    std::unordered_set<std::string>& get_sequences() {
+    std::vector<std::string>& get_sequences() {
         return this->sequences;
     }
 
-    std::unordered_map<std::string, std::map<std::bitset<18>, int, bitset_comparer<18>>>& get_map_sequences_kmers() {
-        return this->map_sequences_kmers;
+    std::unordered_map<std::string, std::map<std::bitset<18>, int, bitset_comparer<18>>>& get_sequences_kmers() {
+        return this->sequences_kmers;
     }
 
-    std::unordered_map<std::string, std::unordered_map<std::string, double>>& get_map_best_hits() {
+    std::unordered_map<int, std::unordered_map<int, double>>& get_map_hits() {
+        return this->map_hits;
+    }
+
+    std::unordered_map<int, std::unordered_map<int, double>>& get_map_best_hits() {
         return this->map_best_hits;
     }
 
-    std::unordered_map<unsigned int, std::unordered_map<unsigned int, double>>& get_map_bidirectional_best_hits() {
+    std::unordered_map<int, std::unordered_map<int, double>>& get_map_bidirectional_best_hits() {
         return this->map_bidirectional_best_hits;
+    }
+
+    std::vector<std::tuple<int, int, double>>& get_vector_tuple_bbh() {
+        return this->vector_tuple_bbh;
     }
 
     /*
@@ -264,29 +236,20 @@ public:
 private:
     int kmer_size;
     const int flag; //0 amino acids, 1 nucleotides
-    const double jaccard_threshold;
-    std::unordered_set<std::string> sequences;
-    std::unordered_map<std::string, std::unordered_map<std::string, unsigned int>> map_sequences_attributes;
-    std::unordered_map<std::string, std::map<std::bitset<18>, int, bitset_comparer<18>>> map_sequences_kmers; //map<sequenza - map<kmer, contatore>>
-    std::unordered_map<std::string, std::unordered_map<std::string, double>> map_best_hits; //map<sequence_name1, map<sequence_name2, jaccard>>
-    std::unordered_map<unsigned int, std::unordered_map<unsigned int, double>> map_bidirectional_best_hits; //map<sequence_name1, map<sequence_name2, jaccard>>
+    unsigned long long genes_lenght;
     std::unordered_set<char> alphabet;
+    std::vector<std::vector<int>>* genome_sequenceid;
+    std::vector<std::string> sequences;
+    std::unordered_map<std::string, std::map<std::bitset<18>, int, bitset_comparer<18>>> sequences_kmers;   //map<sequence - map<kmer, contatore>>
+    const std::vector<std::string>* sequences_prefilter;
+    std::vector<std::pair<int, int>>* best_hits_prefilter;
+    std::unordered_map<int, std::unordered_map<int, double>> map_hits;
+    std::unordered_map<int, std::unordered_map<int, double>> map_best_hits;
+    std::unordered_map<int, std::unordered_map<int, double>> map_bidirectional_best_hits;
+    std::vector<std::tuple<int, int, double>> vector_tuple_bbh;
 
     [[nodiscard]] bool kmer_is_valid(const std::string &str) const {
-        return str.length() == this->kmer_size && str.find_first_not_of("ACGT") == std::string::npos; //TODO: aggiungere test di validità per amminoacidi
-    }
-
-    static std::vector<std::string> split_string(std::string const &str, const char delim) {
-        std::vector<std::string> out;
-        size_t start;
-        size_t end = 0;
-
-        while ((start = str.find_first_not_of(delim, end)) != std::string::npos) {
-            end = str.find(delim, start);
-            out.push_back(str.substr(start, end - start));
-        }
-
-        return out;
+        return str.length() == this->kmer_size && str.find_first_not_of("ACGT") == std::string::npos;
     }
 
     static std::bitset<18> kmer_to_bit(std::string& kmer) {
@@ -316,36 +279,66 @@ private:
         return kmer_bit;
     }
 
-
     void collect_sequences_from_best_hits(const std::vector<std::string>* sequences_input,
-                                          std::unordered_map<std::string, std::unordered_map<std::string, double>>* map_best_hits_input) {
+                                          std::vector<std::pair<int, int>>* best_hits_input) {
 
-        for(auto &a : *map_best_hits_input) {
-            auto it = std::find_if(sequences_input->begin(), sequences_input->end(), StartsWith(a.first));
-            if (it != sequences_input->end())
-                this->sequences.insert(*it);
+        std::set<std::string> temp_sequences;
 
-            for(auto &b : a.second) {
-                it = std::find_if(sequences_input->begin(), sequences_input->end(), StartsWith(b.first));
-                if (it != sequences_input->end())
-                    this->sequences.insert(*it);
-            }
+        for(auto &i : *best_hits_input) {
+            std::string sequence_a = sequences_input->operator[](i.first);
+            std::string sequence_b = sequences_input->operator[](i.second);
+            temp_sequences.insert(sequence_a);
+            temp_sequences.insert(sequence_b);
         }
 
-        std::cout << "sequences collected" << std::endl;
+        this->sequences.reserve(temp_sequences.size());
+        this->sequences.assign(temp_sequences.begin(), temp_sequences.end());
     }
 
-    unsigned int sequence_to_id(const std::string& sequence) {
-        auto map1 = this->map_sequences_attributes.find(sequence);
+    void compute_best_hits() {
+        for (auto &it: this->map_hits) {
+            if(!it.second.empty()) {
+                this->map_best_hits.insert(std::make_pair(it.first, std::unordered_map<int, double>()));
 
-        if (map1 != this->map_sequences_attributes.end()) {
-            std::unordered_map<std::string, unsigned int> map_attributes = map1->second;
+                double max_jaccard = 0;
 
-            auto unique_value = map_attributes.begin();
-            return unique_value->second;
+                for(auto &i: it.second) {
+                    if(i.second > max_jaccard)
+                        max_jaccard = i.second;
+                }
+
+                for(auto &i : it.second) {
+                    if(i.second == max_jaccard)
+                        this->map_best_hits[it.first].insert(std::make_pair(i.first, i.second));
+                }
+            }
+        }
+    }
+
+    /*
+     * For each gene sequence, it inserts each character of which it is composed into an unordered set
+     * (if not yet present)
+     */
+    void compute_alphabet(const std::vector<std::string>* sequences_input) {
+        for (auto &i: *sequences_input) {
+            for(char a : i)
+                this->alphabet.insert(a);
         }
 
-        exit(11);
+        std::cout << "alfabeto calcolato" << std::endl;
+    }
+
+    void compute_kmer_size() {
+        this->genes_lenght = 0;
+        for(auto &i : this->sequences)
+            this->genes_lenght += i.length();
+
+        if(this->flag == 0)
+            this->kmer_size = (int)(log(this->genes_lenght) / log(this->alphabet.size()));
+        else
+            this->kmer_size = (int)(log(this->genes_lenght) / log(4));
+
+        std::cout << "gene length: " << this->genes_lenght << " kmer size " << this->kmer_size << std::endl;
     }
 
     static std::string aminoacid_to_nucleotides(std::basic_string<char> aminoacid) {
@@ -419,7 +412,6 @@ private:
 
         return kmer;
     }
-
 };
 
 #endif //PANDELOS_PLUSPLUS_BIDIRECTIONALBESTHITS_H

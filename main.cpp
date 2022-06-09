@@ -1,6 +1,5 @@
 #include "PangeneIData.h"
 #include "BidirectionalBestHits.h"
-#include "BidirectionalBestHitsV2.h"
 #include "PreFilter.h"
 #include <sys/time.h>
 
@@ -18,7 +17,7 @@ int main(int argc, char* argv[]){
     auto sequences = fire.get_sequences();
     auto genome_sequencesid = fire.get_genome_sequencesid();
 
-    PreFilter filter = PreFilter(sequences, genome_sequencesid, 0);
+    PreFilter filter = PreFilter(sequences, genome_sequencesid, 1);
 
     filter.init_sequences_kmers();
 
@@ -28,7 +27,7 @@ int main(int argc, char* argv[]){
 
     auto prefilter_best_hits = filter.get_best_hits();
 
-    BidirectionalBestHitsV2 bbh = BidirectionalBestHitsV2(sequences, prefilter_best_hits, genome_sequencesid, 0);
+    BidirectionalBestHits bbh = BidirectionalBestHits(sequences, prefilter_best_hits, genome_sequencesid, 1);
 
     bbh.init_sequences_kmers();
 
