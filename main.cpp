@@ -38,10 +38,10 @@ int main(int argc, char* argv[]){
 
     auto map_best_hits = bbh.get_map_best_hits();
 
-    //bbh.calculate_bbh();
-    /*bbh.calculate_bidirectional_best_hits();
+    bbh.calculate_bbh();
 
     auto map_bidirectional_best_hits = bbh.get_map_bidirectional_best_hits();
+
 
     for(auto &i : map_bidirectional_best_hits) {
         auto second_gene = i.second;
@@ -49,7 +49,6 @@ int main(int argc, char* argv[]){
 
         std::cout << i.first << " " << second_gene_value->first << " " << second_gene_value->second << std::endl;
     }
-     */
 
     gettimeofday(&tempo,nullptr); t2 = tempo.tv_sec+(tempo.tv_usec/1000000.0);
 

@@ -134,19 +134,55 @@ public:
         }
 
         this->compute_best_hits();
+
+        std::cout << "2 - best hits calcolati " << std::endl;
     }
 
-        /*void calculate_bbh() {
-            for(auto coppia : this->vector_best_hits) {
-                int a = coppia.first;
-                int b = coppia.second;
-                auto it = std::find_if( this->vector_best_hits.begin(), this->vector_best_hits.end(),
-                                        [&a, &b](const std::pair<int, int>& element){ return element.first == b && element.second == a;} );
+    /*
+     *
+     *  Date:
+     *  A chiave di map_best_hits   (gene A)
+     *  B valore di map_best_hits   (mappa C)
+     *  D chiave di C               (gene D)
+     *  E valore di C               (double)
+     *
+     *  Schema: map_best_hits< A, C<D, E> >
+     *
+     *  Si definisce un BIDIRECTIONAL BEST HITS, se esiste, una coppia di geni tale per cui:
+     *
+     *  per una chiave A, nella sua mappa C esiste un gene D che visto come una delle chiavi di map_best_hits,
+     *  contiene nella sua mappa C una chiave uguale ad A.
+    */
+    void calculate_bbh() {
+        for(auto &map : this->map_best_hits) {
+            int id_gene_a = map.first;
 
-                if(it != this->vector_best_hits.end())
-                    std::cout << it->first << " " << it->second << std::endl;
+            for(auto &submap : map.second) {
+                int id_gene_b = submap.first;
+                double jaccard = submap.second;
+
+                //it: chiave uguale a gene_b
+                auto it = std::find_if(this->map_best_hits.begin(), this->map_best_hits.end(),
+                                       [&id_gene_b](const auto& key){ return key.first == id_gene_b;});
+
+                if(it != this->map_best_hits.end()) {
+
+                    //cerca il gene a come chiave della mappa di it (it->second)
+                    auto it2 = std::find_if(it->second.begin(), it->second.end(),
+                                            [&id_gene_a](const auto& key){ return key.first == id_gene_a;});
+
+                    if(it2 != it->second.end()) {
+                        std::unordered_map<int, double> temp;
+                        temp.insert(std::make_pair(id_gene_b, jaccard));
+
+                        this->map_bidirectional_best_hits.insert(std::make_pair(id_gene_a, temp));
+                    }
+                }
             }
-        }*/
+        }
+
+        std::cout << "2 - bidirectional best hits calcolati" << std::endl;
+    }
 
     /*
      * Per ogni occorrenza della mappa, se il gene è diverso, confrontiamo 2 occorrenze alla volta (seconda parte mappa)
@@ -156,12 +192,12 @@ public:
      */
     void calculate_bidirectional_best_hits() {
 
-        std::unordered_map<int, int> map_bidirectional_best_hits_internal;
+        /*std::unordered_map<int, int> map_bidirectional_best_hits_internal;
 
-        for(auto &gene_a: this->new_map_hits) {
+        for(auto &gene_a: this->map_best_hits) {
             auto gene_a_best_hits = gene_a.second;
 
-            for(auto &gene_b: this->new_map_hits) {
+            for(auto &gene_b: this->map_best_hits) {
                 auto gene_b_best_hits = gene_b.second;
 
                 if(gene_a.first != gene_b.first) {
@@ -203,7 +239,7 @@ public:
                         ///arrived here means that there is no risk of inserting a duplicate key-value or key-value
                         map_bidirectional_best_hits_internal.insert(std::make_pair(c->first, d->first));
 
-                        std::unordered_map<unsigned int, double> temp;
+                        std::unordered_map<int, double> temp;
                         temp.insert(std::make_pair(d->first, d->second));
 
                         std::cout << c->first << " " << d->first << std::endl;
@@ -213,7 +249,7 @@ public:
                 }
             }
         }
-
+        */
         std::cout << "bbh calcolati" << std::endl;
     }
 
@@ -246,7 +282,7 @@ public:
         return this->map_best_hits;
     }
 
-    std::unordered_map<unsigned int, std::unordered_map<unsigned int, double>>& get_map_bidirectional_best_hits() {
+    std::unordered_map<int, std::unordered_map<int, double>>& get_map_bidirectional_best_hits() {
         return this->map_bidirectional_best_hits;
     }
 
@@ -265,12 +301,12 @@ private:
     std::unordered_set<char> alphabet;
     std::vector<std::vector<int>>* genome_sequenceid;
     std::vector<std::string> sequences;
+    std::unordered_map<std::string, std::map<std::bitset<18>, int, bitset_comparer<18>>> sequences_kmers;   //map<sequence - map<kmer, contatore>>
     const std::vector<std::string>* sequences_prefilter;
-    std::unordered_map<std::string, std::map<std::bitset<18>, int, bitset_comparer<18>>> sequences_kmers; //map<sequenza - map<kmer, contatore>>
     std::vector<std::pair<int, int>>* best_hits_prefilter;
     std::unordered_map<int, std::unordered_map<int, double>> map_hits;
     std::unordered_map<int, std::unordered_map<int, double>> map_best_hits;
-    std::unordered_map<unsigned int, std::unordered_map<unsigned int, double>> map_bidirectional_best_hits; //map<sequence_name1, map<sequence_name2, jaccard>>
+    std::unordered_map<int, std::unordered_map<int, double>> map_bidirectional_best_hits;
 
     [[nodiscard]] bool kmer_is_valid(const std::string &str) const {
         return str.length() == this->kmer_size && str.find_first_not_of("ACGT") == std::string::npos; //TODO: aggiungere test di validità per amminoacidi
