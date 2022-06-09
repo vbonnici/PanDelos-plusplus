@@ -45,25 +45,24 @@ public:
         std::string sequence_a;
         std::string sequence_b;
 
-        int index ;
+        int index;
 
-        for(index = 0; index < this->genome_sequencesid->size(); ++index) {
-            for(int i = index + 1; i < this->genome_sequencesid->size(); ++i) {
+        for(index = 0; index < this->genome_sequencesid->size(); index++) {
+            for(int i = index + 1; i < this->genome_sequencesid->size(); i++) {
 
                 std::vector<int> genome_a = this->genome_sequencesid->operator[](index);
                 std::vector<int> genome_b = this->genome_sequencesid->operator[](i);
 
-                for(auto & a: genome_a)
-                    for(auto & b : genome_b) {
-
-                        sequence_a = this->sequences->operator[](a);
-                        sequence_b = this->sequences->operator[](b);
+                for(auto &geneid_a: genome_a)
+                    for(auto &geneid_b : genome_b) {
+                        sequence_a = this->sequences->operator[](geneid_a);
+                        sequence_b = this->sequences->operator[](geneid_b);
 
                         counter_min = 0;
                         counter_max = 0;
 
-                        std::array<unsigned int, 4095> kmer_array_a = this->sequences_kmers.operator[](a);
-                        std::array<unsigned int, 4095> kmer_array_b = this->sequences_kmers.operator[](b);
+                        std::array<unsigned int, 4095> kmer_array_a = this->sequences_kmers.operator[](geneid_a);
+                        std::array<unsigned int, 4095> kmer_array_b = this->sequences_kmers.operator[](geneid_b);
 
                         if (!PreFilter::check_constraint(sequence_a, sequence_b))
                             continue;
@@ -89,13 +88,15 @@ public:
                         }
 
                         jaccard_similarity = (double) counter_min / counter_max;
-                        //std::cout << "prefilter jaccard similarity " << jaccard_similarity << std::endl;
 
                         if (counter_max > 0 && jaccard_similarity > this->jaccard_threshold) {
-                            this->best_hits.emplace_back(std::make_pair(a, b));
+                            std::cout << geneid_a << " " << geneid_b << "prefilter jaccard similarity " << jaccard_similarity << std::endl;
+                            this->best_hits.emplace_back(std::make_pair(geneid_a, geneid_b));
                             //std::cout << a << " best hit con " << b << std::endl;
                         }
                     }
+
+                std::cout << index << " " << i << std::endl;
             }
         }
 
@@ -109,6 +110,7 @@ public:
     std::vector<std::pair<int, int>>& get_best_hits() {
         return this->best_hits;
     }
+
 
 private:
     const double jaccard_threshold;
