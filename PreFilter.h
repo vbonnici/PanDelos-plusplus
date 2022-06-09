@@ -15,7 +15,7 @@ class PreFilter {
 public:
 
     explicit PreFilter(const std::vector<std::string>& sequences, const std::vector<std::vector<int>>& genome_sequencesid, const int flag) :
-        jaccard_threshold(0.8), flag(flag), kmer_size(6) {
+        jaccard_threshold(0.5), flag(flag), kmer_size(6) {
         this->sequences = &sequences;
         this->genome_sequencesid = &genome_sequencesid;
     }
@@ -34,9 +34,11 @@ public:
             this->calculate_kmer_multiplicity_aminoacids();
         else
             this->calculate_kmer_multiplicity_nucleotides();
+
+        std::cout << "1 - kmer_multiplicity calcolate" << std::endl;
     }
 
-    void calculate_best_hits_v2() {
+    void calculate_best_hits() {
         unsigned int value_a;
         unsigned int value_b;
         unsigned int counter_min;
@@ -45,9 +47,7 @@ public:
         std::string sequence_a;
         std::string sequence_b;
 
-        int index;
-
-        for(index = 0; index < this->genome_sequencesid->size(); index++) {
+        for(int index = 0; index < this->genome_sequencesid->size(); index++) {
             for(int i = index + 1; i < this->genome_sequencesid->size(); i++) {
 
                 std::vector<int> genome_a = this->genome_sequencesid->operator[](index);
@@ -55,6 +55,7 @@ public:
 
                 for(auto &geneid_a: genome_a)
                     for(auto &geneid_b : genome_b) {
+
                         sequence_a = this->sequences->operator[](geneid_a);
                         sequence_b = this->sequences->operator[](geneid_b);
 
@@ -68,11 +69,8 @@ public:
                             continue;
 
                         for (int j = 0; j < 4095; ++j) {
-
                             value_a = kmer_array_a[j];
                             value_b = kmer_array_b[j];
-
-                            //std::cout << "value_a " << value_a << " value_b " << value_b << std::endl;
 
                             if(value_a > value_b) {
                                 counter_min += value_b;
@@ -82,25 +80,20 @@ public:
                                 counter_min += value_a;
                                 counter_max += value_b;
                             }
-
-                            //std::cout << "min " << counter_min << " max " << counter_max << std::endl;
-
                         }
 
                         jaccard_similarity = (double) counter_min / counter_max;
+                        //std::cout << jaccard_similarity << std::endl;
 
                         if (counter_max > 0 && jaccard_similarity > this->jaccard_threshold) {
-                            std::cout << geneid_a << " " << geneid_b << "prefilter jaccard similarity " << jaccard_similarity << std::endl;
+                            //std::cout << geneid_a << " " << geneid_b << "prefilter jaccard similarity " << jaccard_similarity << std::endl;
                             this->best_hits.emplace_back(std::make_pair(geneid_a, geneid_b));
-                            //std::cout << a << " best hit con " << b << std::endl;
                         }
                     }
-
-                std::cout << index << " " << i << std::endl;
             }
         }
 
-        std::cout << "prefilter best hits calcolati " << std::endl;
+        std::cout << "1 - best hits calcolati " << std::endl;
     }
 
     std::vector<std::array<unsigned int, 4095>>& get_sequences_kmers() {
@@ -123,19 +116,6 @@ private:
 
     [[nodiscard]] bool kmer_is_valid(const std::string &str) const {
         return str.length() == this->kmer_size && str.find_first_not_of("ACGT") == std::string::npos;
-    }
-
-    static std::vector<std::string> split_string(std::string const &str, const char delim) {
-        std::vector<std::string> out;
-        size_t start;
-        size_t end = 0;
-
-        while ((start = str.find_first_not_of(delim, end)) != std::string::npos) {
-            end = str.find(delim, start);
-            out.push_back(str.substr(start, end - start));
-        }
-
-        return out;
     }
 
     static int kmer_to_int(std::string& kmer) {
@@ -164,8 +144,6 @@ private:
     }
 
     static bool check_constraint(std::string& sequence_a, std::string& sequence_b) {
-        if(sequence_a == sequence_b)
-            return false;
 
         if(sequence_a.length() >= sequence_b.length()*2 || sequence_b.length() >= sequence_a.length()*2)
             return false;

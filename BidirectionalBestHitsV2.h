@@ -13,20 +13,15 @@
 
 //aggiungere bitset comparer
 
-//typedef std::unordered_map<int, int>::value_type unmap_string_string_value_type;
-
-//aggiungere StartWith
-
 class BidirectionalBestHitsV2 {
 public:
     explicit BidirectionalBestHitsV2(const std::vector<std::string>& sequences,
                                    std::vector<std::pair<int, int>>& best_hits,
                                    std::vector<std::vector<int>>& genome_sequenceid,
-                                   const int flag) : flag(flag), jaccard_threshold(0.8) {
+                                   const int flag) : flag(flag) {
         this->compute_alphabet(&sequences);
         this->kmer_size = 9; //TODO: scelta di k dinamico
         this->collect_sequences_from_best_hits(&sequences, &best_hits);
-        std::cout << "costruttore bbh" << std::endl;
         this->best_hits_prefilter = &best_hits;
         this->sequences_prefilter = &sequences;
         this->genome_sequenceid = &genome_sequenceid;
@@ -48,7 +43,6 @@ public:
     }
 
     void calculate_kmer_multiplicity() {
-        int counter = 0;
         std::string kmer;
         for(auto &i : this->sequences_kmers) {
             std::string sequence = i.first;
@@ -59,11 +53,8 @@ public:
                 else
                     kmer = BidirectionalBestHitsV2::aminoacid_to_nucleotides(sequence.substr(window, 3));
 
-                //std::cout << kmer << std::endl;
                 if(kmer_is_valid(kmer)) {
-                    //std::cout << kmer << std::endl;
                     std::bitset<18> kmer_in_bit = kmer_to_bit(kmer);
-                    //std::cout << kmer_in_bit << std::endl;
 
                     auto result = i.second.find(kmer_in_bit);
 
@@ -73,14 +64,12 @@ public:
                         result->second += 1;
                 }
             }
-            //++counter;
-            //std::cout << sequence[0] << counter << std::endl;
         }
 
-        std::cout << "kmer_multiplicity calcolate" << std::endl;
+        std::cout << "2 - kmer_multiplicity calcolate" << std::endl;
     }
 
-    /*void calculate_best_hits() {
+    void calculate_best_hits() {
         unsigned int value_a;
         unsigned int value_b;
         unsigned int counter_min;
@@ -89,161 +78,75 @@ public:
         std::string sequence_a;
         std::string sequence_b;
 
-        int index;
+        for (auto &i: *this->best_hits_prefilter) {
+            this->map_hits.insert(std::make_pair(i.first, std::unordered_map<int, double>()));
+            this->map_hits.insert(std::make_pair(i.second, std::unordered_map<int, double>()));
+        }
 
-        for(auto &a : this->sequences_kmers) {
-            for(auto &b : this->sequences_kmers) {
-                sequence_a = a.first;
-                sequence_b = b.first;
+        for (auto &i: *this->best_hits_prefilter) {
+            int id_gene_a = i.first;
+            int id_gene_b = i.second;
 
-                counter_min = 0;
-                counter_max = 0;
+            sequence_a = this->sequences_prefilter->operator[](id_gene_a);
+            sequence_b = this->sequences_prefilter->operator[](id_gene_b);
 
-                if(sequence_a != sequence_b) { //TODO: aggiungere vincoli secondo calcolo bh
-                    for (int j = 0; j < 1<<18 ; j++) {
-                        std::bitset<18> kmer(j);
-                        //std::cout << kmer << std::endl;
+            counter_min = 0;
+            counter_max = 0;
 
-                        auto result_a = a.second.find(kmer);
-                        auto result_b = b.second.find(kmer);
+            auto kmer_key_a = this->sequences_kmers.find(sequence_a);
+            auto kmer_key_b = this->sequences_kmers.find(sequence_b);
 
-                        value_a = 0;
-                        value_b = 0;
+            for (int j = 0; j < 1 << 18; j++) {
+                std::bitset<18> kmer(j);
 
-                        if (result_a != a.second.end()) {
-                            if(result_a->first == kmer) {
-                                value_a = result_a->second;
-                                //std::cout << "j " << j << " result_a->second " << result_a->second << std::endl;
-                            }
-                        }
+                auto result_a = kmer_key_a->second.find(kmer);
+                auto result_b = kmer_key_b->second.find(kmer);
 
-                        if (result_b != b.second.end()) {
-                            if(result_b->first == kmer) {
-                                value_b = result_b->second;
-                                //std::cout << "j " << j << " result_b->second " << result_b->second << " value_b " << value_b << std::endl;
-                            }
-                        }
+                value_a = 0;
+                value_b = 0;
 
-                        counter_min += std::min(value_a, value_b);
-                        counter_max += std::max(value_a, value_b);
-                    }
+                if (result_a != kmer_key_a->second.end())
+                    if (result_a->first == kmer)
+                        value_a = result_a->second;
 
 
-                    //std::cout << "min " << counter_min << " max " << counter_max << std::endl;
+                if (result_b != kmer_key_b->second.end())
+                    if (result_b->first == kmer)
+                        value_b = result_b->second;
 
-                    jaccard_similarity = (double) counter_min / counter_max;
-                    //std::cout << "jaccard similarity " << jaccard_similarity << std::endl;
-
-                    if(std::isfinite(jaccard_similarity) && jaccard_similarity > this->jaccard_threshold) {
-                        std::unordered_map<std::string, double> temp;
-                        temp.insert(std::make_pair(sequence_b, jaccard_similarity));
-
-                        this->map_best_hits.insert(std::make_pair(sequence_a, temp));
-                    }
+                if(value_a > value_b) {
+                    counter_min += value_b;
+                    counter_max += value_a;
+                }
+                else {
+                    counter_min += value_a;
+                    counter_max += value_b;
                 }
             }
-        }
-        std::cout << "seconda parte best hits calcolati " << std::endl;
 
-    }*/
+            jaccard_similarity = (double) counter_min / counter_max;
+            //std::cout << "2 - jaccard similarity " << jaccard_similarity << std::endl;
 
-    void calculate_best_hits_v2() {
-        unsigned int value_a;
-        unsigned int value_b;
-        unsigned int counter_min;
-        unsigned int counter_max;
-        double jaccard_similarity;
-        std::string sequence_a;
-        std::string sequence_b;
-
-        int index;
-
-        for(index = 0; index < this->genome_sequenceid->size(); ++index) {
-            for(int i = index + 1; i < this->genome_sequenceid->size(); ++i) {
-
-                        std::vector<int> genome_a = this->genome_sequenceid->operator[](index);
-                        std::vector<int> genome_b = this->genome_sequenceid->operator[](i);
-
-                        for (auto &a: genome_a)
-                            for (auto &b: genome_b) {
-
-                                /*auto it = std::find_if(this->best_hits_prefilter->begin(),
-                                                               this->best_hits_prefilter->end(), FindPair(a, b));*/
-
-                                auto it = std::find_if( this->best_hits_prefilter->begin(), this->best_hits_prefilter->end(),
-                                                        [&a, &b](const std::pair<int, int>& element){ return element.first == a && element.second == b;} );
-
-                                    if (it != this->best_hits_prefilter->end()) {
-                                        //std::cout << a << " " << b << std::endl;
-
-                                        sequence_a = this->sequences_prefilter->operator[](a);
-                                        sequence_b = this->sequences_prefilter->operator[](b);
-
-                                        counter_min = 0;
-                                        counter_max = 0;
-
-                                        auto kmer_key_a = this->sequences_kmers.find(sequence_a);
-                                        auto kmer_key_b = this->sequences_kmers.find(sequence_b);
-
-                                        for (int j = 0; j < 1 << 18; j++) {
-                                            std::bitset<18> kmer(j);
-                                            //std::cout << kmer << std::endl;
-
-                                            auto result_a = kmer_key_a->second.find(kmer);
-                                            auto result_b = kmer_key_b->second.find(kmer);
-
-                                            value_a = 0;
-                                            value_b = 0;
-
-                                            if (result_a != kmer_key_a->second.end()) {
-                                                if (result_a->first == kmer) {
-                                                    value_a = result_a->second;
-                                                    //std::cout << "j " << j << " result_a->second " << result_a->second << std::endl;
-                                                }
-                                            }
-
-                                            if (result_b != kmer_key_b->second.end()) {
-                                                if (result_b->first == kmer) {
-                                                    value_b = result_b->second;
-                                                    //std::cout << "j " << j << " result_b->second " << result_b->second << " value_b " << value_b << std::endl;
-                                                }
-                                            }
-
-                                            counter_min += std::min(value_a, value_b);
-                                            counter_max += std::max(value_a, value_b);
-                                        }
-
-                                        jaccard_similarity = (double) counter_min / counter_max;
-                                        //std::cout << "prefilter jaccard similarity " << jaccard_similarity << std::endl;
-
-                                        if (counter_max > 0 && jaccard_similarity > this->jaccard_threshold) {
-                                            this->vector_best_hits.emplace_back(std::make_pair(a, b));
-                                            //std::cout << a << " best hit con " << b << std::endl;
-                                            std::unordered_map<int, double> temp;
-                                            temp.insert(std::make_pair(b, jaccard_similarity));
-
-                                            this->new_map_best_hits.insert(std::make_pair(a, temp));
-                                        }
-                                    }
-                            }
-
+            if (counter_max > 0) {
+                this->map_hits[id_gene_a].insert(std::make_pair(id_gene_b, jaccard_similarity));
+                this->map_hits[id_gene_b].insert(std::make_pair(id_gene_a, jaccard_similarity));
             }
         }
 
-        std::cout << "seconda parte best hits calcolati v2 " << std::endl;
+        this->compute_best_hits();
     }
 
-    void calculate_bbh() {
-        for(auto coppia : this->vector_best_hits) {
-            int a = coppia.first;
-            int b = coppia.second;
-            auto it = std::find_if( this->vector_best_hits.begin(), this->vector_best_hits.end(),
-                                    [&a, &b](const std::pair<int, int>& element){ return element.first == b && element.second == a;} );
+        /*void calculate_bbh() {
+            for(auto coppia : this->vector_best_hits) {
+                int a = coppia.first;
+                int b = coppia.second;
+                auto it = std::find_if( this->vector_best_hits.begin(), this->vector_best_hits.end(),
+                                        [&a, &b](const std::pair<int, int>& element){ return element.first == b && element.second == a;} );
 
-            if(it != this->vector_best_hits.end())
-                std::cout << it->first << " " << it->second << std::endl;
-        }
-    }
+                if(it != this->vector_best_hits.end())
+                    std::cout << it->first << " " << it->second << std::endl;
+            }
+        }*/
 
     /*
      * Per ogni occorrenza della mappa, se il gene è diverso, confrontiamo 2 occorrenze alla volta (seconda parte mappa)
@@ -255,10 +158,10 @@ public:
 
         std::unordered_map<int, int> map_bidirectional_best_hits_internal;
 
-        for(auto &gene_a: this->new_map_best_hits) {
+        for(auto &gene_a: this->new_map_hits) {
             auto gene_a_best_hits = gene_a.second;
 
-            for(auto &gene_b: this->new_map_best_hits) {
+            for(auto &gene_b: this->new_map_hits) {
                 auto gene_b_best_hits = gene_b.second;
 
                 if(gene_a.first != gene_b.first) {
@@ -335,12 +238,12 @@ public:
         return this->sequences_kmers;
     }
 
-    std::unordered_map<std::string, std::unordered_map<std::string, double>>& get_map_best_hits() {
-        return this->map_best_hits;
+    std::unordered_map<int, std::unordered_map<int, double>>& get_map_hits() {
+        return this->map_hits;
     }
 
-    std::unordered_map<int, std::unordered_map<int, double>>& get_new_map_best_hits() {
-        return this->new_map_best_hits;
+    std::unordered_map<int, std::unordered_map<int, double>>& get_map_best_hits() {
+        return this->map_best_hits;
     }
 
     std::unordered_map<unsigned int, std::unordered_map<unsigned int, double>>& get_map_bidirectional_best_hits() {
@@ -356,25 +259,18 @@ public:
         return this->alphabet;
     }
 
-    std::vector<std::pair<int, int>> get_vector_best_hits() {
-        return this->vector_best_hits;
-    }
-
 private:
     int kmer_size;
     const int flag; //0 amino acids, 1 nucleotides
-    const double jaccard_threshold;
+    std::unordered_set<char> alphabet;
+    std::vector<std::vector<int>>* genome_sequenceid;
     std::vector<std::string> sequences;
     const std::vector<std::string>* sequences_prefilter;
     std::unordered_map<std::string, std::map<std::bitset<18>, int, bitset_comparer<18>>> sequences_kmers; //map<sequenza - map<kmer, contatore>>
     std::vector<std::pair<int, int>>* best_hits_prefilter;
-    std::vector<std::vector<int>>* genome_sequenceid;
-    std::unordered_map<std::string, std::unordered_map<std::string, double>> map_best_hits; //map<sequence_name1, map<sequence_name2, jaccard>>
+    std::unordered_map<int, std::unordered_map<int, double>> map_hits;
+    std::unordered_map<int, std::unordered_map<int, double>> map_best_hits;
     std::unordered_map<unsigned int, std::unordered_map<unsigned int, double>> map_bidirectional_best_hits; //map<sequence_name1, map<sequence_name2, jaccard>>
-    std::unordered_set<char> alphabet;
-    std::vector<std::pair<int, int>> vector_best_hits;
-    std::unordered_map<int, std::unordered_map<int, double>> new_map_best_hits;
-    std::tuple<int, int, double> tuple_bidirectional_best_hits;
 
     [[nodiscard]] bool kmer_is_valid(const std::string &str) const {
         return str.length() == this->kmer_size && str.find_first_not_of("ACGT") == std::string::npos; //TODO: aggiungere test di validità per amminoacidi
@@ -407,16 +303,6 @@ private:
         return kmer_bit;
     }
 
-    static bool check_constraint(std::string& sequence_a, std::string& sequence_b) {
-        if(sequence_a == sequence_b)
-            return false;
-
-        if(sequence_a.length() >= sequence_b.length()*2 || sequence_b.length() >= sequence_a.length()*2)
-            return false;
-
-        return true;
-    }
-
     void collect_sequences_from_best_hits(const std::vector<std::string>* sequences_input,
                                           std::vector<std::pair<int, int>>* best_hits_input) {
 
@@ -432,7 +318,26 @@ private:
         this->sequences.reserve(temp_sequences.size());
         this->sequences.assign(temp_sequences.begin(), temp_sequences.end());
 
-        std::cout << "sequences collected" << std::endl;
+    }
+
+    void compute_best_hits() {
+        for (auto &it: this->map_hits) {
+            if(!it.second.empty()) {
+                this->map_best_hits.insert(std::make_pair(it.first, std::unordered_map<int, double>()));
+
+                double max_jaccard = 0;
+
+                for(auto &i: it.second) {
+                    if(i.second > max_jaccard)
+                        max_jaccard = i.second;
+                }
+
+                for(auto &i : it.second) {
+                    if(i.second == max_jaccard)
+                        this->map_best_hits[it.first].insert(std::make_pair(i.first, i.second));
+                }
+            }
+        }
     }
 
     static std::string aminoacid_to_nucleotides(std::basic_string<char> aminoacid) {
@@ -506,7 +411,6 @@ private:
 
         return kmer;
     }
-
 };
 
 #endif //PANDELOS_PLUSPLUS_BIDIRECTIONALBESTHITSV2_H
