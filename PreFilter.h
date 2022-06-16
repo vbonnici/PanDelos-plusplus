@@ -18,6 +18,7 @@ public:
         jaccard_threshold(0.8), flag(flag), kmer_size(6) {
         this->sequences = &sequences;
         this->genome_sequencesid = &genome_sequencesid;
+        this->best_hits.reserve(sequences.size()*sequences.size());
     }
 
     void init_sequences_kmers() {
