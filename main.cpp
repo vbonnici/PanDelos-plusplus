@@ -34,10 +34,10 @@ int main(int argc, char* argv[]){
     auto sequences = fire.get_sequences();
     auto genome_sequencesid = fire.get_genome_sequencesid();
 
-    Kvalue define_kvalue = Kvalue(&sequences, filename, sequences_type, output, log);
+    Kvalue define_kvalue = Kvalue(&sequences, filename, sequences_type, output, log, &log_stream);
     kmer_size = define_kvalue.get_kmer_size();
 
-    std::cout << kmer_size << std::endl;
+    log_stream << "kmer_size: " << kmer_size << std::endl;
 
     PreFilter filter = PreFilter(sequences, genome_sequencesid, sequences_type);
 
@@ -49,7 +49,7 @@ int main(int argc, char* argv[]){
 
     auto prefilter_best_hits = filter.get_best_hits();
 
-    BidirectionalBestHits bbh = BidirectionalBestHits(sequences, prefilter_best_hits, genome_sequencesid, sequences_type);
+    BidirectionalBestHits bbh = BidirectionalBestHits(sequences, prefilter_best_hits, genome_sequencesid, sequences_type, kmer_size, &log_stream);
 
     bbh.init_sequences_kmers();
 

@@ -10,7 +10,6 @@
 #include <cmath>
 #include <unordered_set>
 #include <algorithm>
-#include "custom_bitset.h"
 #include "include/kvalue.h"
 
 template<size_t sz> struct bitset_comparer {
@@ -24,10 +23,13 @@ public:
     explicit BidirectionalBestHits(const std::vector<std::string>& sequences,
                                    std::vector<std::pair<int, int>>& best_hits,
                                    std::vector<std::vector<int>>& genome_sequenceid,
-                                   const int flag) : flag(flag) {
+                                   const int sequences_type,
+                                   const int kmer_size,
+                                   std::ofstream* log_stream) : sequences_type(sequences_type), kmer_size(kmer_size){
+        this->log_stream = log_stream;
+
         this->collect_sequences_from_best_hits(&sequences, &best_hits);
 
-        this->compute_kmer_size();
         this->best_hits_prefilter = &best_hits;
         this->sequences_prefilter = &sequences;
         this->genome_sequenceid = &genome_sequenceid;
@@ -55,7 +57,7 @@ public:
             std::string sequence = i.first;
 
             for(int window = 0; window < sequence.length(); ++window) {
-                if(this->flag == 1)
+                if(this->sequences_type == 1)
                     kmer = sequence.substr(window, this->kmer_size);
                 else
                     kmer = BidirectionalBestHits::aminoacid_to_nucleotides(sequence.substr(window, 3));
@@ -73,7 +75,7 @@ public:
             }
         }
 
-        std::cout << "2 - kmer_multiplicity calcolate" << std::endl;
+        *this->log_stream << "2 - kmer_multiplicity calcolate" << std::endl;
     }
 
     void calculate_best_hits() {
@@ -103,7 +105,7 @@ public:
             auto kmer_key_a = this->sequences_kmers.find(sequence_a);
             auto kmer_key_b = this->sequences_kmers.find(sequence_b);
 
-            for (int j = 0; j < 1 << 18; j++) {
+            for (int j = 0; j < 1 << kvalue; j++) {
                 std::bitset<kvalue> kmer(j);
 
                 auto result_a = kmer_key_a->second.find(kmer);
@@ -132,7 +134,7 @@ public:
             }
 
             jaccard_similarity = (double) counter_min / counter_max;
-            std::cout << "2 - jaccard similarity " << jaccard_similarity << std::endl;
+            *this->log_stream << "2 - jaccard similarity " << jaccard_similarity << std::endl;
 
             if (counter_max > 0) {
                 this->map_hits[id_gene_a].insert(std::make_pair(id_gene_b, jaccard_similarity));
@@ -142,7 +144,7 @@ public:
 
         this->compute_best_hits();
 
-        std::cout << "2 - best hits calcolati " << std::endl;
+        *this->log_stream << "2 - best hits calcolati " << std::endl;
     }
 
     /*
@@ -200,14 +202,14 @@ public:
             }
         }
 
-        std::cout << "2 - bidirectional best hits calcolati" << std::endl;
+        *this->log_stream << "2 - bidirectional best hits calcolati" << std::endl;
     }
 
     std::vector<std::string>& get_sequences() {
         return this->sequences;
     }
 
-    std::unordered_map<std::string, std::map<std::bitset<18>, int, bitset_comparer<18>>>& get_sequences_kmers() {
+    std::unordered_map<std::string, std::map<std::bitset<kvalue>, int, bitset_comparer<kvalue>>>& get_sequences_kmers() {
         return this->sequences_kmers;
     }
 
@@ -227,23 +229,13 @@ public:
         return this->vector_tuple_bbh;
     }
 
-    /*
-     * Getter which returns the unsorted set containing the alphabet obtained from all genes in the .faa file
-     *
-     * @param[out] std::unordered_set<char>&
-     */
-    std::unordered_set<char>& get_alphabet() {
-        return this->alphabet;
-    }
-
 private:
+    std::ofstream* log_stream;
     int kmer_size;
-    const int flag; //0 amino acids, 1 nucleotides
-    unsigned long long genes_lenght;
-    std::unordered_set<char> alphabet;
+    const int sequences_type; //0 amino acids, 1 nucleotides
     std::vector<std::vector<int>>* genome_sequenceid;
     std::vector<std::string> sequences;
-    std::unordered_map<std::string, std::map<std::bitset<kvalue>, int, bitset_comparer<18>>> sequences_kmers;   //map<sequence - map<kmer, contatore>>
+    std::unordered_map<std::string, std::map<std::bitset<kvalue>, int, bitset_comparer<kvalue>>> sequences_kmers;   //map<sequence - map<kmer, contatore>>
 
     const std::vector<std::string>* sequences_prefilter;
     std::vector<std::pair<int, int>>* best_hits_prefilter;
@@ -318,19 +310,6 @@ private:
                 }
             }
         }
-    }
-
-    void compute_kmer_size() {
-        this->genes_lenght = 0;
-        for(auto &i : this->sequences)
-            this->genes_lenght += i.length();
-
-        if(this->flag == 0)
-            this->kmer_size = (int)(log(this->genes_lenght) / log(this->alphabet.size()));
-        else
-            this->kmer_size = (int)(log(this->genes_lenght) / log(4));
-
-        std::cout << "gene length: " << this->genes_lenght << " kmer size " << this->kmer_size << std::endl;
     }
 
     static std::string aminoacid_to_nucleotides(std::basic_string<char> aminoacid) {

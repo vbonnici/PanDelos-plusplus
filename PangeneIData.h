@@ -247,7 +247,6 @@ private:
                 throw std::runtime_error("size fread != filesize");
 
         } catch(std::exception const& e) {
-            std::cout << filename;
             std::cout << "Exception: " << e.what() << "\n";
             exit(11);
         }
