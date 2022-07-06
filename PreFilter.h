@@ -10,12 +10,13 @@
 #include <cmath>
 #include <array>
 #include <algorithm>
+#include "custom_list.h"
 
 class PreFilter {
 public:
 
     explicit PreFilter(const std::vector<std::string>& sequences, const std::vector<std::vector<int>>& genome_sequencesid, const int flag) :
-        jaccard_threshold(0.8), flag(flag), kmer_size(6) {
+        jaccard_threshold(0.5), flag(flag), kmer_size(6) {
         this->sequences = &sequences;
         this->genome_sequencesid = &genome_sequencesid;
         this->best_hits.reserve(sequences.size()*sequences.size());
@@ -47,6 +48,11 @@ public:
         double jaccard_similarity;
         std::string sequence_a;
         std::string sequence_b;
+
+        struct elemento *lista;
+        lista = crea_lista();
+        double time_taken_total = 0;
+        int counter_inserimento = 0;
 
         for(int index = 0; index < this->genome_sequencesid->size(); index++) {
             for(int i = index + 1; i < this->genome_sequencesid->size(); i++) {
@@ -88,11 +94,22 @@ public:
 
                         if (counter_max > 0 && jaccard_similarity > this->jaccard_threshold) {
                             //std::cout << geneid_a << " " << geneid_b << "prefilter jaccard similarity " << jaccard_similarity << std::endl;
+                            clock_t t;
+                            t = clock();
+                            ++counter_inserimento;
+
                             this->best_hits.emplace_back(std::make_pair(geneid_a, geneid_b));
+
+                            //metti_su_pila(&lista, geneid_a, geneid_b);
+                            t = clock() - t;
+                            double time_taken = ((double)t)/CLOCKS_PER_SEC;
+                            time_taken_total += time_taken;
                         }
                     }
             }
         }
+
+        printf("tempo totale inserimento di %d elementi in %f secondi \n", counter_inserimento, time_taken_total);
 
         std::cout << "1 - best hits calcolati " << std::endl;
     }

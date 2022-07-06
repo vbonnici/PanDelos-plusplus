@@ -90,7 +90,7 @@ public:
     }
 
     /*
-     * Helper that takes care of printing the vector containing the names of the genomes
+     * Kvalue that takes care of printing the vector containing the names of the genomes
      */
     void print_genomes_names() {
         print_container<std::string, std::vector<std::string>::iterator>
@@ -98,7 +98,7 @@ public:
     }
 
     /*
-     * Helper that takes care of printing the vector containing the sequences description
+     * Kvalue that takes care of printing the vector containing the sequences description
      */
     void print_sequences_description() {
         print_container<std::string, std::vector<std::string>::iterator>
@@ -106,7 +106,7 @@ public:
     }
 
     /*
-     * Helper that takes care of printing the vector containing the sequences
+     * Kvalue that takes care of printing the vector containing the sequences
      */
     void print_sequences() {
         print_container<std::string, std::vector<std::string>::iterator>
@@ -247,6 +247,7 @@ private:
                 throw std::runtime_error("size fread != filesize");
 
         } catch(std::exception const& e) {
+            std::cout << filename;
             std::cout << "Exception: " << e.what() << "\n";
             exit(11);
         }

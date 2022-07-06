@@ -10,6 +10,8 @@
 #include <cmath>
 #include <unordered_set>
 #include <algorithm>
+#include "custom_bitset.h"
+#include "include/kvalue.h"
 
 template<size_t sz> struct bitset_comparer {
     bool operator() (const std::bitset<sz> &b1, const std::bitset<sz> &b2) const {
@@ -24,7 +26,7 @@ public:
                                    std::vector<std::vector<int>>& genome_sequenceid,
                                    const int flag) : flag(flag) {
         this->collect_sequences_from_best_hits(&sequences, &best_hits);
-        this->compute_alphabet(&sequences);
+
         this->compute_kmer_size();
         this->best_hits_prefilter = &best_hits;
         this->sequences_prefilter = &sequences;
@@ -38,9 +40,10 @@ public:
 
         for(auto &sequence: this->sequences) {
 
-            std::map<std::bitset<18>, int, bitset_comparer<18>> temp;
-
-            temp.insert(std::make_pair("00000000000000000000", 0));
+            std::map<std::bitset<kvalue>, int, bitset_comparer<kvalue>> temp;
+            std::bitset<kvalue> bitset_temp;
+            bitset_temp.set(false);
+            temp.insert(std::make_pair(bitset_temp, 0));
 
             this->sequences_kmers.insert(std::make_pair(sequence, temp));
         }
@@ -58,7 +61,7 @@ public:
                     kmer = BidirectionalBestHits::aminoacid_to_nucleotides(sequence.substr(window, 3));
 
                 if(kmer_is_valid(kmer)) {
-                    std::bitset<18> kmer_in_bit = kmer_to_bit(kmer);
+                    std::bitset<kvalue> kmer_in_bit = kmer_to_bit(kmer);
 
                     auto result = i.second.find(kmer_in_bit);
 
@@ -101,7 +104,7 @@ public:
             auto kmer_key_b = this->sequences_kmers.find(sequence_b);
 
             for (int j = 0; j < 1 << 18; j++) {
-                std::bitset<18> kmer(j);
+                std::bitset<kvalue> kmer(j);
 
                 auto result_a = kmer_key_a->second.find(kmer);
                 auto result_b = kmer_key_b->second.find(kmer);
@@ -129,7 +132,7 @@ public:
             }
 
             jaccard_similarity = (double) counter_min / counter_max;
-            //std::cout << "2 - jaccard similarity " << jaccard_similarity << std::endl;
+            std::cout << "2 - jaccard similarity " << jaccard_similarity << std::endl;
 
             if (counter_max > 0) {
                 this->map_hits[id_gene_a].insert(std::make_pair(id_gene_b, jaccard_similarity));
@@ -240,7 +243,8 @@ private:
     std::unordered_set<char> alphabet;
     std::vector<std::vector<int>>* genome_sequenceid;
     std::vector<std::string> sequences;
-    std::unordered_map<std::string, std::map<std::bitset<18>, int, bitset_comparer<18>>> sequences_kmers;   //map<sequence - map<kmer, contatore>>
+    std::unordered_map<std::string, std::map<std::bitset<kvalue>, int, bitset_comparer<18>>> sequences_kmers;   //map<sequence - map<kmer, contatore>>
+
     const std::vector<std::string>* sequences_prefilter;
     std::vector<std::pair<int, int>>* best_hits_prefilter;
     std::unordered_map<int, std::unordered_map<int, double>> map_hits;
@@ -252,12 +256,13 @@ private:
         return str.length() == this->kmer_size && str.find_first_not_of("ACGT") == std::string::npos;
     }
 
-    static std::bitset<18> kmer_to_bit(std::string& kmer) {
-        std::bitset<18> kmer_bit("00000000000000000000");
-        std::bitset<18> A("00");
-        std::bitset<18> C("01");
-        std::bitset<18> G("10");
-        std::bitset<18> T("11");
+    static std::bitset<kvalue> kmer_to_bit(std::string& kmer) {
+        std::bitset<kvalue> kmer_bit;
+        kmer_bit.set(false);
+        std::bitset<kvalue> A("00");
+        std::bitset<kvalue> C("01");
+        std::bitset<kvalue> G("10");
+        std::bitset<kvalue> T("11");
 
         for(int a = 0; a < kmer.length(); ++a) {
 
@@ -313,19 +318,6 @@ private:
                 }
             }
         }
-    }
-
-    /*
-     * For each gene sequence, it inserts each character of which it is composed into an unordered set
-     * (if not yet present)
-     */
-    void compute_alphabet(const std::vector<std::string>* sequences_input) {
-        for (auto &i: *sequences_input) {
-            for(char a : i)
-                this->alphabet.insert(a);
-        }
-
-        std::cout << "alfabeto calcolato" << std::endl;
     }
 
     void compute_kmer_size() {
