@@ -81,8 +81,7 @@ private:
             *this->log_stream << command.c_str() << std::endl;
             system(command.c_str());
             exit(0);
-        } else
-            *this->log_stream << "kvalue corretto" << std::endl;
+        }
     }
 
 
