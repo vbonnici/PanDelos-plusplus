@@ -39,7 +39,7 @@ int main(int argc, char* argv[]){
 
     log_stream << "kmer_size: " << kmer_size << std::endl;
 
-    PreFilter filter = PreFilter(sequences, genome_sequencesid, sequences_type);
+    PreFilter filter = PreFilter(sequences, genome_sequencesid, sequences_type, &log_stream);
 
     filter.init_sequences_kmers();
 

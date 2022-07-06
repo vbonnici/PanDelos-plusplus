@@ -5,19 +5,33 @@
 #include <string>
 #include <vector>
 #include <map>
+#include <bitset>
 #include <unordered_map>
 #include <cmath>
 #include <array>
 #include <algorithm>
+#include <omp.h>
+#include <sys/time.h>
+#include <cassert>
+#include <typeinfo>
+
+struct timeval tempo{};
+double t1, t2, sum;
+long long t1_test, t2_test, test_time = 0.000000;
+
 
 class PreFilter {
 public:
 
-    explicit PreFilter(const std::vector<std::string>& sequences, const std::vector<std::vector<int>>& genome_sequencesid, const int flag) :
-        jaccard_threshold(0.5), flag(flag), kmer_size(6) {
+    explicit PreFilter(const std::vector<std::string>& sequences, const std::vector<std::vector<int>>& genome_sequencesid, const int sequences_type, std::ofstream* log_stream) :
+        jaccard_threshold(0.5), sequences_type(sequences_type), kmer_size(6) {
+        this->log_stream = log_stream;
+
         this->sequences = &sequences;
         this->genome_sequencesid = &genome_sequencesid;
         this->best_hits.reserve(sequences.size()*sequences.size());
+        *this->log_stream << "byte riservati per prefilter best hits: " << sequences.size() * sequences.size() << std::endl;
+
     }
 
     void init_sequences_kmers() {
@@ -30,14 +44,14 @@ public:
     }
 
     void calculate_kmer_multiplicity() {
-        if(this->flag == 0)
+        if(this->sequences_type == 0)
             this->calculate_kmer_multiplicity_aminoacids();
         else
             this->calculate_kmer_multiplicity_nucleotides();
 
-        std::cout << "1 - kmer_multiplicity calcolate" << std::endl;
+        *this->log_stream << "1 - kmer_multiplicity calcolate" << std::endl;
     }
-
+    
     void calculate_best_hits() {
         unsigned int value_a;
         unsigned int value_b;
@@ -46,21 +60,32 @@ public:
         double jaccard_similarity;
         std::string sequence_a;
         std::string sequence_b;
+        int index, i;
 
-        for(int index = 0; index < this->genome_sequencesid->size(); index++) {
-            for(int i = index + 1; i < this->genome_sequencesid->size(); i++) {
+        omp_set_num_threads(omp_get_num_procs());
 
-                std::vector<int> genome_a = this->genome_sequencesid->operator[](index);
+        //#pragma omp parallel for private(index, i, t1, t2, sum, jaccard_similarity, counter_min, counter_max, sequence_a, sequence_b, value_a, value_b)
+        for(index = 0; index < this->genome_sequencesid->size(); index++) {
+
+            gettimeofday(&tempo,nullptr); t1 = tempo.tv_sec+(tempo.tv_usec/1000000.0);
+            std::vector<int> genome_a = this->genome_sequencesid->operator[](index);
+
+            #pragma omp parallel for shared(genome_a) private(jaccard_similarity, counter_min, counter_max, sequence_a, sequence_b, value_a, value_b)
+            for(i = index + 1; i < this->genome_sequencesid->size(); i++) {
+
+                std::vector<std::pair<int, int>> best_hits_local;
                 std::vector<int> genome_b = this->genome_sequencesid->operator[](i);
+
+                best_hits_local.reserve(genome_a.size() * genome_b.size());
 
                 for(auto &geneid_a: genome_a)
                     for(auto &geneid_b : genome_b) {
-
                         sequence_a = this->sequences->operator[](geneid_a);
                         sequence_b = this->sequences->operator[](geneid_b);
 
                         counter_min = 0;
                         counter_max = 0;
+                        jaccard_similarity = 0;
 
                         std::array<unsigned int, 4095> kmer_array_a = this->sequences_kmers.operator[](geneid_a);
                         std::array<unsigned int, 4095> kmer_array_b = this->sequences_kmers.operator[](geneid_b);
@@ -68,6 +93,7 @@ public:
                         if (!PreFilter::check_constraint(sequence_a, sequence_b))
                             continue;
 
+                        gettimeofday(&tempo,nullptr); t1_test = tempo.tv_sec+(tempo.tv_usec/1000000.0);
                         for (int j = 0; j < 4095; ++j) {
                             value_a = kmer_array_a[j];
                             value_b = kmer_array_b[j];
@@ -81,22 +107,33 @@ public:
                                 counter_max += value_b;
                             }
                         }
+                        gettimeofday(&tempo,nullptr); t2_test = tempo.tv_sec+(tempo.tv_usec/1000000.0);
+                        test_time += (t2_test-t1_test);
 
                         jaccard_similarity = (double) counter_min / counter_max;
-                        //std::cout << jaccard_similarity << std::endl;
 
                         if (counter_max > 0 && jaccard_similarity > this->jaccard_threshold) {
-                            //std::cout << geneid_a << " " << geneid_b << "prefilter jaccard similarity " << jaccard_similarity << std::endl;
+                            //*this->log_stream << geneid_a << " " << geneid_b << " prefilter jaccard similarity " << jaccard_similarity << std::endl;
 
+                            best_hits_local.emplace_back(std::make_pair(geneid_a, geneid_b));
 
-                            this->best_hits.emplace_back(std::make_pair(geneid_a, geneid_b));
-
+                            //this->temp(std::make_pair(geneid_a, geneid_b));
                         }
                     }
+
+                #pragma omp critical
+                this->best_hits.insert(this->best_hits.end(), std::make_move_iterator(best_hits_local.begin()), std::make_move_iterator(best_hits_local.end()));
+
             }
+
+            gettimeofday(&tempo,nullptr); t2 = tempo.tv_sec+(tempo.tv_usec/1000000.0);
+            sum = (t2-t1);
+
+            *this->log_stream << "Tempo computazione genoma " << index << " con gli altri genomi " << sum << " tempo inserimento:" << test_time << std::endl;
+            *this->log_stream << "Best hits in array: " << this->best_hits.size() << std::endl;
         }
 
-        std::cout << "1 - best hits calcolati " << std::endl;
+        *this->log_stream << "1 - best hits calcolati " << std::endl;
     }
 
     std::vector<std::array<unsigned int, 4095>>& get_sequences_kmers() {
@@ -110,12 +147,13 @@ public:
 
 private:
     const double jaccard_threshold;
-    const int flag; //0 amino acids, 1 nucleotides
+    const int sequences_type; //0 amino acids, 1 nucleotides
     const int kmer_size;
     const std::vector<std::string>* sequences;
     const std::vector<std::vector<int>>* genome_sequencesid;
     std::vector<std::array<unsigned int, 4095>> sequences_kmers;
     std::vector<std::pair<int, int>> best_hits;
+    std::ofstream* log_stream;
 
     [[nodiscard]] bool kmer_is_valid(const std::string &str) const {
         return str.length() == this->kmer_size && str.find_first_not_of("ACGT") == std::string::npos;
