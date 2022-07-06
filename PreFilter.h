@@ -17,13 +17,15 @@
 
 struct timeval tempo{};
 double t1, t2, sum;
-long long t1_test, t2_test, test_time = 0.000000;
 
 
 class PreFilter {
 public:
 
-    explicit PreFilter(const std::vector<std::string>& sequences, const std::vector<std::vector<int>>& genome_sequencesid, const int sequences_type, std::ofstream* log_stream) :
+    explicit PreFilter(const std::vector<std::string>& sequences,
+                       const std::vector<std::vector<int>>& genome_sequencesid,
+                       const int sequences_type,
+                       std::ofstream* log_stream) :
         jaccard_threshold(0.5), sequences_type(sequences_type), kmer_size(6) {
         this->log_stream = log_stream;
 
@@ -93,7 +95,6 @@ public:
                         if (!PreFilter::check_constraint(sequence_a, sequence_b))
                             continue;
 
-                        gettimeofday(&tempo,nullptr); t1_test = tempo.tv_sec+(tempo.tv_usec/1000000.0);
                         for (int j = 0; j < 4095; ++j) {
                             value_a = kmer_array_a[j];
                             value_b = kmer_array_b[j];
@@ -107,8 +108,6 @@ public:
                                 counter_max += value_b;
                             }
                         }
-                        gettimeofday(&tempo,nullptr); t2_test = tempo.tv_sec+(tempo.tv_usec/1000000.0);
-                        test_time += (t2_test-t1_test);
 
                         jaccard_similarity = (double) counter_min / counter_max;
 
@@ -127,7 +126,7 @@ public:
             gettimeofday(&tempo,nullptr); t2 = tempo.tv_sec+(tempo.tv_usec/1000000.0);
             sum = (t2-t1);
 
-            *this->log_stream << "Tempo computazione genoma " << index << " con gli altri genomi " << sum << " tempo inserimento:" << test_time << std::endl;
+            *this->log_stream << "Tempo computazione genoma " << index << " con gli altri genomi " << sum << std::endl;
             *this->log_stream << "Best hits in array: " << this->best_hits.size() << std::endl;
         }
 

@@ -11,6 +11,7 @@
 #include <unordered_set>
 #include <algorithm>
 #include "include/kvalue.h"
+#include <omp.h>
 
 template<size_t sz> struct bitset_comparer {
     bool operator() (const std::bitset<sz> &b1, const std::bitset<sz> &b2) const {
@@ -22,7 +23,7 @@ class BidirectionalBestHits {
 public:
     explicit BidirectionalBestHits(const std::vector<std::string>& sequences,
                                    std::vector<std::pair<int, int>>& best_hits,
-                                   std::vector<std::vector<int>>& genome_sequenceid,
+                                   std::vector<std::vector<int>>& genome_sequencesid,
                                    const int sequences_type,
                                    const int kmer_size,
                                    std::ofstream* log_stream) : sequences_type(sequences_type), kmer_size(kmer_size){
@@ -32,7 +33,7 @@ public:
 
         this->best_hits_prefilter = &best_hits;
         this->sequences_prefilter = &sequences;
-        this->genome_sequenceid = &genome_sequenceid;
+        this->genome_sequencesid = &genome_sequencesid;
     }
 
     /*
@@ -233,7 +234,7 @@ private:
     std::ofstream* log_stream;
     int kmer_size;
     const int sequences_type; //0 amino acids, 1 nucleotides
-    std::vector<std::vector<int>>* genome_sequenceid;
+    std::vector<std::vector<int>>* genome_sequencesid;
     std::vector<std::string> sequences;
     std::unordered_map<std::string, std::map<std::bitset<kvalue>, int, bitset_comparer<kvalue>>> sequences_kmers;   //map<sequence - map<kmer, contatore>>
 
@@ -243,6 +244,7 @@ private:
     std::unordered_map<int, std::unordered_map<int, double>> map_best_hits;
     std::unordered_map<int, std::unordered_map<int, double>> map_bidirectional_best_hits;
     std::vector<std::tuple<int, int, double>> vector_tuple_bbh;
+
 
     [[nodiscard]] bool kmer_is_valid(const std::string &str) const {
         return str.length() == this->kmer_size && str.find_first_not_of("ACGT") == std::string::npos;
@@ -383,6 +385,7 @@ private:
 
         return kmer;
     }
+
 };
 
 #endif //PANDELOS_PLUSPLUS_BIDIRECTIONALBESTHITS_H

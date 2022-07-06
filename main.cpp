@@ -3,6 +3,7 @@
 #include "PangeneIData.h"
 #include "BidirectionalBestHits.h"
 #include "PreFilter.h"
+#include "Paralog.h"
 #include <sys/time.h>
 #include "lib/Kvalue.h"
 #include "lib/helper.h"
@@ -63,9 +64,23 @@ int main(int argc, char* argv[]){
 
     auto vector_tuple_bbh = bbh.get_vector_tuple_bbh();
 
+    Paralog paralog = Paralog(sequences, genome_sequencesid, sequences_type, kmer_size, vector_tuple_bbh, &log_stream);
+
+    paralog.init_sequences_kmers();
+
+    paralog.calculate_kmer_multiplicity();
+
+    paralog.calculate_paralog();
+
+    auto paralog_best_hits = paralog.get_paralog_best_hits();
+
     std::ofstream output_stream(output, std::ofstream::trunc);
 
     for(auto &i : vector_tuple_bbh) {
+        output_stream << std::get<0>(i) << " " << std::get<1>(i) << " " << std::get<2>(i) << std::endl;
+    }
+
+    for(auto &i : paralog_best_hits) {
         output_stream << std::get<0>(i) << " " << std::get<1>(i) << " " << std::get<2>(i) << std::endl;
     }
 
