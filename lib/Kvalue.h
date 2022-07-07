@@ -24,11 +24,16 @@ public:
         this->log_stream = log_stream;
 
         for (auto &i: *sequences_input) {
-            for(char a : i)
+            for(char a : i) {
                 this->alphabet.insert(a);
+            }
         }
 
-        *this->log_stream << "alfabeto calcolato" << std::endl;
+        *this->log_stream << "alfabeto calcolato: " << std::endl;
+
+        for(auto &i : this->alphabet)
+            *this->log_stream << i << " ";
+        *this->log_stream << std::endl;
 
         this->genes_lenght = 0;
         for(auto &i : *sequences_input)
@@ -59,7 +64,14 @@ private:
     std::ofstream* log_stream;
 
     void check_kvalue_file(const char* filename, int sequences_type, const std::string& output, const std::string& logfile) const {
-        if(kvalue != this->kmer_size*2) {
+        int kmer_size_expected;
+
+        if(sequences_type == 1)
+            kmer_size_expected = this->kmer_size*2;   //2 bit per ogni nucleotide
+        else
+            kmer_size_expected = this->kmer_size*3*2; //triplette e 2 bit per ogni nucleotide
+
+        if(kvalue != kmer_size_expected) {
 
             std::filesystem::path cwd = std::filesystem::current_path() / "include/kvalue.h";
 
@@ -69,7 +81,7 @@ private:
                 exit(11);
             }
 
-            ofs << "#define kvalue " << this->kmer_size*2;
+            ofs << "#define kvalue " << kmer_size_expected;
             ofs.close();
 
 

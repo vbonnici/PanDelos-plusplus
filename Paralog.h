@@ -26,7 +26,7 @@ public:
                      const int sequences_type,
                      const int kmer_size,
                      std::vector<std::tuple<int, int, double>>& vector_tuple_bbh,
-                     std::ofstream* log_stream) : sequences_type(sequences_type), kmer_size(kmer_size){
+                     std::ofstream* log_stream) : sequences_type(sequences_type), kmer_size(6){
 
         this->log_stream = log_stream;
         this->sequences = &sequences_prefilter;
@@ -91,10 +91,17 @@ private:
 
         for(int i = 0; i < this->genome_minimum_jaccard.size(); ++i) {
             for(auto &tuple : *this->vector_tuple_bbh) {
-                if(std::get<0>(tuple) <= limit_genes_id.operator[](i))
+                if(std::get<0>(tuple) <= limit_genes_id.operator[](i)) {
+                    //*this->log_stream << std::get<2>(tuple) << std::endl;
                     if(std::get<2>(tuple) < this->genome_minimum_jaccard.operator[](i))
                         this->genome_minimum_jaccard.operator[](i) = std::get<2>(tuple);
+                }
             }
+        }
+
+        for(int i = 0; i < this->genome_minimum_jaccard.size(); ++i) {
+            *this->log_stream << "genome id " << i << " minimum jaccard " << this->genome_minimum_jaccard.operator[](i) << std::endl;
+
         }
     }
 

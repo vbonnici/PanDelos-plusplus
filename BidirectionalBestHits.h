@@ -61,7 +61,7 @@ public:
                 if(this->sequences_type == 1)
                     kmer = sequence.substr(window, this->kmer_size);
                 else
-                    kmer = BidirectionalBestHits::aminoacid_to_nucleotides(sequence.substr(window, 3));
+                    kmer = BidirectionalBestHits::aminoacid_to_nucleotides(sequence.substr(window, this->kmer_size));
 
                 if(kmer_is_valid(kmer)) {
                     std::bitset<kvalue> kmer_in_bit = kmer_to_bit(kmer);
@@ -135,7 +135,7 @@ public:
             }
 
             jaccard_similarity = (double) counter_min / counter_max;
-            *this->log_stream << "2 - jaccard similarity " << jaccard_similarity << std::endl;
+            //*this->log_stream << "2 - jaccard similarity " << jaccard_similarity  << std::endl;
 
             if (counter_max > 0) {
                 this->map_hits[id_gene_a].insert(std::make_pair(id_gene_b, jaccard_similarity));
@@ -247,7 +247,10 @@ private:
 
 
     [[nodiscard]] bool kmer_is_valid(const std::string &str) const {
-        return str.length() == this->kmer_size && str.find_first_not_of("ACGT") == std::string::npos;
+        if(this->sequences_type == 1)
+            return str.length() == this->kmer_size && str.find_first_not_of("ACGT") == std::string::npos;
+        else
+            return str.length() == this->kmer_size*3 && str.find_first_not_of("ACGT") == std::string::npos;
     }
 
     static std::bitset<kvalue> kmer_to_bit(std::string& kmer) {

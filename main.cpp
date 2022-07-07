@@ -76,9 +76,13 @@ int main(int argc, char* argv[]){
 
     std::ofstream output_stream(output, std::ofstream::trunc);
 
+    output_stream << "Ortologhi " << std::endl;
+
     for(auto &i : vector_tuple_bbh) {
         output_stream << std::get<0>(i) << " " << std::get<1>(i) << " " << std::get<2>(i) << std::endl;
     }
+
+    output_stream << "Paraloghi: " << std::endl;
 
     for(auto &i : paralog_best_hits) {
         output_stream << std::get<0>(i) << " " << std::get<1>(i) << " " << std::get<2>(i) << std::endl;

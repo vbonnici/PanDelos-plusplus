@@ -112,7 +112,7 @@ public:
                         jaccard_similarity = (double) counter_min / counter_max;
 
                         if (counter_max > 0 && jaccard_similarity > this->jaccard_threshold) {
-                            *this->log_stream << geneid_a << " " << geneid_b << " prefilter jaccard similarity " << jaccard_similarity << std::endl;
+                            //*this->log_stream << geneid_a << " " << geneid_b << " prefilter jaccard similarity " << jaccard_similarity << std::endl;
 
                             best_hits_local.emplace_back(std::make_pair(geneid_a, geneid_b));
                         }
