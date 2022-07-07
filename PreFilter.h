@@ -14,6 +14,7 @@
 #include <sys/time.h>
 #include <cassert>
 #include <typeinfo>
+#include "include/global_options.h"
 
 struct timeval tempo{};
 double t1, t2, sum;
@@ -64,9 +65,9 @@ public:
         std::string sequence_b;
         int index, i;
 
-        omp_set_num_threads(omp_get_num_procs());
+        if(!debug)
+            omp_set_num_threads(omp_get_num_procs());
 
-        //#pragma omp parallel for private(index, i, t1, t2, sum, jaccard_similarity, counter_min, counter_max, sequence_a, sequence_b, value_a, value_b)
         for(index = 0; index < this->genome_sequencesid->size(); index++) {
 
             gettimeofday(&tempo,nullptr); t1 = tempo.tv_sec+(tempo.tv_usec/1000000.0);

@@ -12,6 +12,8 @@
 #include <algorithm>
 #include "include/kvalue.h"
 #include <omp.h>
+#include "include/global_options.h"
+
 
 template<size_t sz> struct bitset_comparer {
     bool operator() (const std::bitset<sz> &b1, const std::bitset<sz> &b2) const {
@@ -29,7 +31,7 @@ public:
                                    std::ofstream* log_stream) : sequences_type(sequences_type), kmer_size(kmer_size){
         this->log_stream = log_stream;
 
-        this->collect_sequences_from_best_hits(&sequences, &best_hits);
+        this->collect_sequences_id_from_best_hits(&best_hits);
 
         this->best_hits_prefilter = &best_hits;
         this->sequences_prefilter = &sequences;
@@ -41,21 +43,21 @@ public:
      */
     void init_sequences_kmers() {
 
-        for(auto &sequence: this->sequences) {
+        for(auto &sequence_id: this->sequences_id) {
 
             std::map<std::bitset<kvalue>, int, bitset_comparer<kvalue>> temp;
             std::bitset<kvalue> bitset_temp;
             bitset_temp.set(false);
             temp.insert(std::make_pair(bitset_temp, 0));
 
-            this->sequences_kmers.insert(std::make_pair(sequence, temp));
+            this->sequences_kmers.insert(std::make_pair(sequence_id, temp));
         }
     }
 
     void calculate_kmer_multiplicity() {
         std::string kmer;
         for(auto &i : this->sequences_kmers) {
-            std::string sequence = i.first;
+            std::string sequence = this->sequences_prefilter->operator[](i.first);
 
             for(int window = 0; window < sequence.length(); ++window) {
                 if(this->sequences_type == 1)
@@ -88,23 +90,25 @@ public:
         std::string sequence_a;
         std::string sequence_b;
 
+        //non inserisce duplicati
         for (auto &i: *this->best_hits_prefilter) {
             this->map_hits.insert(std::make_pair(i.first, std::unordered_map<int, double>()));
             this->map_hits.insert(std::make_pair(i.second, std::unordered_map<int, double>()));
         }
 
+        if(!debug)
+            omp_set_num_threads(omp_get_num_procs());
+
+        #pragma omp parallel for private(jaccard_similarity, counter_min, counter_max, sequence_a, sequence_b, value_a, value_b)
         for (auto &i: *this->best_hits_prefilter) {
             int id_gene_a = i.first;
             int id_gene_b = i.second;
 
-            sequence_a = this->sequences_prefilter->operator[](id_gene_a);
-            sequence_b = this->sequences_prefilter->operator[](id_gene_b);
-
             counter_min = 0;
             counter_max = 0;
 
-            auto kmer_key_a = this->sequences_kmers.find(sequence_a);
-            auto kmer_key_b = this->sequences_kmers.find(sequence_b);
+            auto kmer_key_a = this->sequences_kmers.find(id_gene_a);
+            auto kmer_key_b = this->sequences_kmers.find(id_gene_b);
 
             for (int j = 0; j < 1 << kvalue; j++) {
                 std::bitset<kvalue> kmer(j);
@@ -138,8 +142,16 @@ public:
             //*this->log_stream << "2 - jaccard similarity " << jaccard_similarity  << std::endl;
 
             if (counter_max > 0) {
-                this->map_hits[id_gene_a].insert(std::make_pair(id_gene_b, jaccard_similarity));
-                this->map_hits[id_gene_b].insert(std::make_pair(id_gene_a, jaccard_similarity));
+                auto result_a = this->map_hits.find(id_gene_a);
+
+                #pragma omp critical
+                result_a->second.insert(std::make_pair(id_gene_b, jaccard_similarity));
+
+
+                auto result_b = this->map_hits.find(id_gene_b);
+
+                #pragma omp critical
+                result_b->second.insert(std::make_pair(id_gene_a, jaccard_similarity));
             }
         }
 
@@ -206,11 +218,11 @@ public:
         *this->log_stream << "2 - bidirectional best hits calcolati" << std::endl;
     }
 
-    std::vector<std::string>& get_sequences() {
-        return this->sequences;
+    std::vector<int>& get_sequences_id() {
+        return this->sequences_id;
     }
 
-    std::unordered_map<std::string, std::map<std::bitset<kvalue>, int, bitset_comparer<kvalue>>>& get_sequences_kmers() {
+    std::unordered_map<int, std::map<std::bitset<kvalue>, int, bitset_comparer<kvalue>>>& get_sequences_kmers() {
         return this->sequences_kmers;
     }
 
@@ -222,10 +234,6 @@ public:
         return this->map_best_hits;
     }
 
-    std::unordered_map<int, std::unordered_map<int, double>>& get_map_bidirectional_best_hits() {
-        return this->map_bidirectional_best_hits;
-    }
-
     std::vector<std::tuple<int, int, double>>& get_vector_tuple_bbh() {
         return this->vector_tuple_bbh;
     }
@@ -235,14 +243,13 @@ private:
     int kmer_size;
     const int sequences_type; //0 amino acids, 1 nucleotides
     std::vector<std::vector<int>>* genome_sequencesid;
-    std::vector<std::string> sequences;
-    std::unordered_map<std::string, std::map<std::bitset<kvalue>, int, bitset_comparer<kvalue>>> sequences_kmers;   //map<sequence - map<kmer, contatore>>
+    std::vector<int> sequences_id;
+    std::unordered_map<int, std::map<std::bitset<kvalue>, int, bitset_comparer<kvalue>>> sequences_kmers;   //map<sequence_id - map<kmer, contatore>>
 
     const std::vector<std::string>* sequences_prefilter;
     std::vector<std::pair<int, int>>* best_hits_prefilter;
     std::unordered_map<int, std::unordered_map<int, double>> map_hits;
     std::unordered_map<int, std::unordered_map<int, double>> map_best_hits;
-    std::unordered_map<int, std::unordered_map<int, double>> map_bidirectional_best_hits;
     std::vector<std::tuple<int, int, double>> vector_tuple_bbh;
 
 
@@ -281,25 +288,24 @@ private:
         return kmer_bit;
     }
 
-    void collect_sequences_from_best_hits(const std::vector<std::string>* sequences_input,
-                                          std::vector<std::pair<int, int>>* best_hits_input) {
+    void collect_sequences_id_from_best_hits(std::vector<std::pair<int, int>>* best_hits_input) {
 
-        std::set<std::string> temp_sequences;
+        std::set<int> temp_sequences;
 
         for(auto &i : *best_hits_input) {
-            std::string sequence_a = sequences_input->operator[](i.first);
-            std::string sequence_b = sequences_input->operator[](i.second);
-            temp_sequences.insert(sequence_a);
-            temp_sequences.insert(sequence_b);
+            temp_sequences.insert(i.first);
+            temp_sequences.insert(i.second);
         }
 
-        this->sequences.reserve(temp_sequences.size());
-        this->sequences.assign(temp_sequences.begin(), temp_sequences.end());
+        this->sequences_id.reserve(temp_sequences.size());
+        this->sequences_id.assign(temp_sequences.begin(), temp_sequences.end());
     }
 
     void compute_best_hits() {
+        #pragma omp parallel for
         for (auto &it: this->map_hits) {
             if(!it.second.empty()) {
+                #pragma omp critical
                 this->map_best_hits.insert(std::make_pair(it.first, std::unordered_map<int, double>()));
 
                 double max_jaccard = 0;
@@ -310,8 +316,12 @@ private:
                 }
 
                 for(auto &i : it.second) {
-                    if(i.second == max_jaccard)
-                        this->map_best_hits[it.first].insert(std::make_pair(i.first, i.second));
+                    if(i.second == max_jaccard) {
+                        auto result = this->map_best_hits.find(it.first);
+
+                        #pragma omp critical
+                        result->second.insert(std::make_pair(i.first, i.second));
+                    }
                 }
             }
         }

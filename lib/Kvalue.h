@@ -11,7 +11,7 @@
 #include "../include/kvalue.h"
 #include <stdlib.h>
 #include <filesystem>
-
+#include "../include/global_options.h"
 
 class Kvalue {
 public:
@@ -72,10 +72,15 @@ private:
             kmer_size_expected = this->kmer_size*3*2; //triplette e 2 bit per ogni nucleotide
 
         if(kvalue != kmer_size_expected) {
+            std::ofstream ofs;
 
-            std::filesystem::path cwd = std::filesystem::current_path() / "include/kvalue.h";
+            if(debug)
+                ofs = std::ofstream("../include/kvalue.h", std::ofstream::trunc);
+            else {
+                std::filesystem::path cwd = std::filesystem::current_path() / "include/kvalue.h";
+                ofs = std::ofstream(cwd.string(), std::ofstream::trunc);
+            }
 
-            std::ofstream ofs(cwd.string(), std::ofstream::trunc);
             if (!ofs) {
                 *this->log_stream << "errore apertura file" << std::endl;
                 exit(11);
@@ -86,7 +91,11 @@ private:
 
 
             std::stringstream ss;
-            ss << "g++ -w -std=c++17 -fopenmp -O3 main.cpp && ./a.out" << " -f " << filename << " -s " << sequences_type << " -o " << output << " -l " << logfile;
+
+            if(debug)
+                ss << "g++ -w -std=c++17 -fopenmp -O3 ../main.cpp && ./a.out" << " -f " << filename << " -s " << sequences_type << " -o " << output << " -l " << logfile;
+            else
+                ss << "g++ -w -std=c++17 -fopenmp -O3 main.cpp && ./a.out" << " -f " << filename << " -s " << sequences_type << " -o " << output << " -l " << logfile;
 
             std::string command = ss.str();
 

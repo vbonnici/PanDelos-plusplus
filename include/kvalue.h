@@ -1,1 +1,1 @@
-#define kvalue 18
+#define kvalue 12

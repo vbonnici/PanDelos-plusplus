@@ -1,7 +1,3 @@
-//
-// Created by Giandonato Inverso on 06/07/2022.
-//
-
 #ifndef PANDELOS_PLUSPLUS_PARALOG_H
 #define PANDELOS_PLUSPLUS_PARALOG_H
 
@@ -18,6 +14,8 @@
 #include <omp.h>
 #include <sys/time.h>
 #include <array>
+#include "include/global_options.h"
+
 
 class Paralog {
 public:
@@ -115,15 +113,14 @@ private:
         std::string sequence_b;
         int index, i;
 
-        omp_set_num_threads(omp_get_num_procs());
+        if(!debug)
+            omp_set_num_threads(omp_get_num_procs());
 
         #pragma omp parallel for private(index, i, t1, t2, sum, jaccard_similarity, counter_min, counter_max, sequence_a, sequence_b, value_a, value_b)
         for(index = 0; index < this->genome_sequencesid->size(); index++) {
 
             gettimeofday(&tempo,nullptr); t1 = tempo.tv_sec+(tempo.tv_usec/1000000.0);
             std::vector<int> genome_a = this->genome_sequencesid->operator[](index);
-
-            //#pragma omp parallel for shared(genome_a) private(jaccard_similarity, counter_min, counter_max, sequence_a, sequence_b, value_a, value_b)
 
             std::vector<std::tuple<int, int, double>> best_hits_local;
             std::vector<int> genome_b = this->genome_sequencesid->operator[](index);
