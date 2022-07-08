@@ -155,6 +155,8 @@ public:
             }
         }
 
+        *this->log_stream << "2 - compute best hits " << std::endl;
+
         this->compute_best_hits();
 
         *this->log_stream << "2 - best hits calcolati " << std::endl;
@@ -176,7 +178,7 @@ public:
      *  contiene nella sua mappa C una chiave uguale ad A.
     */
     void calculate_bbh() {
-        for(auto &map : this->map_best_hits) {
+        for (auto &map : this->map_best_hits) {
             int id_gene_a = map.first;
 
             for(auto &submap : map.second) {
@@ -209,7 +211,6 @@ public:
 
                         if(it3 == this->vector_tuple_bbh.end())
                             this->vector_tuple_bbh.emplace_back(std::make_tuple(id_gene_a, id_gene_b, jaccard));
-
                     }
                 }
             }
@@ -302,10 +303,8 @@ private:
     }
 
     void compute_best_hits() {
-        #pragma omp parallel for
         for (auto &it: this->map_hits) {
             if(!it.second.empty()) {
-                #pragma omp critical
                 this->map_best_hits.insert(std::make_pair(it.first, std::unordered_map<int, double>()));
 
                 double max_jaccard = 0;
@@ -319,7 +318,6 @@ private:
                     if(i.second == max_jaccard) {
                         auto result = this->map_best_hits.find(it.first);
 
-                        #pragma omp critical
                         result->second.insert(std::make_pair(i.first, i.second));
                     }
                 }

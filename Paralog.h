@@ -159,7 +159,7 @@ private:
                     jaccard_similarity = (double) counter_min / counter_max;
 
                     if (counter_max > 0 && jaccard_similarity > this->genome_minimum_jaccard.operator[](index)) {
-                        *this->log_stream << geneid_a << " " << geneid_b << " paralog jaccard similarity " << jaccard_similarity << std::endl;
+                        //*this->log_stream << geneid_a << " " << geneid_b << " paralog jaccard similarity " << jaccard_similarity << std::endl;
 
                         best_hits_local.emplace_back(std::make_tuple(geneid_a, geneid_b, jaccard_similarity));
                     }
