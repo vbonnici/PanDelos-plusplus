@@ -1,6 +1,8 @@
 #include <iostream>
 #include <string>
 #include "PangeneIData.h"
+#include "Omologus.h"
+#include "BestHits.h"
 #include "BidirectionalBestHits.h"
 #include "PreFilter.h"
 #include "Paralog.h"
@@ -8,16 +10,13 @@
 #include "lib/Kvalue.h"
 #include "lib/ArgParse.h"
 
-
 int main(int argc, char* argv[]){
-    ArgParser parser = ArgParser();
-
-    parser.parse_arguments(argc, argv);
-
-    int kmer_size;
-
     struct timeval tempo{};
     double t1, t2;
+
+    /*** Argument parsing ***/
+    ArgParser parser = ArgParser();
+    parser.parse_arguments(argc, argv);
 
     const char* filename = parser.get_filename();
     int sequences_type = parser.get_sequences_type();
@@ -25,57 +24,52 @@ int main(int argc, char* argv[]){
     std::string log = parser.get_log();
 
     std::ofstream log_stream(log, std::ofstream::trunc);
+    std::ofstream output_stream(output, std::ofstream::trunc);
 
-    gettimeofday(&tempo,nullptr); t1 = tempo.tv_sec+(tempo.tv_usec/1000000.0);
-
+    /*** File parsing ***/
+        gettimeofday(&tempo,nullptr); t1 = tempo.tv_sec+(tempo.tv_usec/1000000.0);
     PangeneIData fire = PangeneIData(filename);
-
     fire.close();
 
     auto sequences = fire.get_sequences();
     auto genome_sequencesid = fire.get_genome_sequencesid();
 
+    /*** Check kvalue ***/
     Kvalue define_kvalue = Kvalue(&sequences, filename, sequences_type, output, log, &log_stream);
-    kmer_size = define_kvalue.get_kmer_size();
-
+    int kmer_size = define_kvalue.get_kmer_size();
     log_stream << "kmer_size: " << kmer_size << std::endl;
 
+    /*** Prefiltering ***/
     PreFilter filter = PreFilter(sequences, genome_sequencesid, sequences_type, &log_stream);
-
     filter.init_sequences_kmers();
-
     filter.calculate_kmer_multiplicity();
-
     filter.calculate_best_hits();
-
     auto prefilter_best_hits = filter.get_best_hits();
 
-    BidirectionalBestHits bbh = BidirectionalBestHits(sequences, prefilter_best_hits, genome_sequencesid, sequences_type, kmer_size, &log_stream);
+    /*** Omologus ***/
+    Omologus omologus = Omologus(sequences, prefilter_best_hits, sequences_type, kmer_size, &log_stream);
+    omologus.init_sequences_kmers();
+    omologus.calculate_kmer_multiplicity();
+    omologus.calculate_best_hits();
+    auto map_hits = omologus.get_map_hits();
 
-    bbh.init_sequences_kmers();
+    /*** BestHits ***/
+    BestHits bh = BestHits(map_hits, &log_stream);
+    bh.compute_best_hits();
+    auto map_best_hits = bh.get_map_best_hits();
 
-    bbh.calculate_kmer_multiplicity();
-
-    bbh.calculate_best_hits();
-
-    auto map_best_hits = bbh.get_map_best_hits();
-
+    /*** BidirectionalBestHits ***/
+    BidirectionalBestHits bbh = BidirectionalBestHits(map_best_hits, &log_stream);
     bbh.calculate_bbh();
-
     auto vector_tuple_bbh = bbh.get_vector_tuple_bbh();
 
+    /*** Paralog ***/
     Paralog paralog = Paralog(sequences, genome_sequencesid, sequences_type, kmer_size, vector_tuple_bbh, &log_stream);
-
-    paralog.init_sequences_kmers();
-
-    paralog.calculate_kmer_multiplicity();
-
     paralog.calculate_paralog();
-
     auto paralog_best_hits = paralog.get_paralog_best_hits();
 
-    std::ofstream output_stream(output, std::ofstream::trunc);
 
+    /*** Output ***/
     output_stream << "Ortologhi " << std::endl;
 
     for(auto &i : vector_tuple_bbh) {
@@ -90,7 +84,7 @@ int main(int argc, char* argv[]){
 
     output_stream.close();
 
-    gettimeofday(&tempo,nullptr); t2 = tempo.tv_sec+(tempo.tv_usec/1000000.0);
+        gettimeofday(&tempo,nullptr); t2 = tempo.tv_sec+(tempo.tv_usec/1000000.0);
 
     log_stream << "Tempo computazione: " << t2-t1 << std::endl;
 

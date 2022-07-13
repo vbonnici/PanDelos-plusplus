@@ -23,14 +23,15 @@ public:
     explicit Kvalue(const std::vector<std::string>* sequences_input, const char* filename, int sequences_type, const std::string& output, const std::string& logfile, std::ofstream* log_stream) {
         this->log_stream = log_stream;
 
-        for (auto &i: *sequences_input) {
-            for(char a : i) {
+        for (auto &i: *sequences_input)
+            for(char a : i)
                 this->alphabet.insert(a);
-            }
-        }
+
+        this->sanitize_alphabet();
 
         *this->log_stream << "alfabeto calcolato: " << std::endl;
 
+        //print alphabet
         for(auto &i : this->alphabet)
             *this->log_stream << i << " ";
         *this->log_stream << std::endl;
@@ -39,8 +40,12 @@ public:
         for(auto &i : *sequences_input)
             this->genes_lenght += i.length();
 
-        if(sequences_type == 0)
+        if(sequences_type == 0) {
             this->kmer_size = (int)(log(this->genes_lenght) / log(this->alphabet.size()));
+
+            if(this->kmer_size % 3 != 0)
+                this->kmer_size = this->roundUp(this->kmer_size, 3);
+        }
         else
             this->kmer_size = (int)(log(this->genes_lenght) / log(4));
 
@@ -64,14 +69,14 @@ private:
     std::ofstream* log_stream;
 
     void check_kvalue_file(const char* filename, int sequences_type, const std::string& output, const std::string& logfile) const {
-        int kmer_size_expected;
+        int kvalue_size_expected;
 
         if(sequences_type == 1)
-            kmer_size_expected = this->kmer_size*2;   //2 bit per ogni nucleotide
+            kvalue_size_expected = this->kmer_size*2;   //2 bit per ogni nucleotide
         else
-            kmer_size_expected = this->kmer_size*3*2; //triplette e 2 bit per ogni nucleotide
+            kvalue_size_expected = (this->kmer_size/3)*2; //triplette e 2 bit per ogni nucleotide
 
-        if(kvalue != kmer_size_expected) {
+        if(kvalue != kvalue_size_expected) {
             std::ofstream ofs;
 
             if(debug)
@@ -86,7 +91,7 @@ private:
                 exit(11);
             }
 
-            ofs << "#define kvalue " << kmer_size_expected;
+            ofs << "#define kvalue " << kvalue_size_expected;
             ofs.close();
 
 
@@ -105,6 +110,24 @@ private:
         }
     }
 
+     int roundUp(int numToRound, int multiple) {
+        if (multiple == 0)
+            return numToRound;
+
+        int remainder = numToRound % multiple;
+        if (remainder == 0)
+            return numToRound;
+
+        return numToRound + multiple - remainder;
+    }
+
+    void sanitize_alphabet() {
+        for(auto &i : this->alphabet) {
+            std::string temp = reinterpret_cast<const char *>(i);
+            if(temp.find_first_not_of("FLIMVSPTAY*HQNKDECWRG") != std::string::npos)
+                this->alphabet.erase(i);
+        }
+    }
 
 };
 

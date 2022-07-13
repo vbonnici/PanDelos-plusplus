@@ -156,6 +156,10 @@ private:
         return str.length() == this->kmer_size && str.find_first_not_of("ACGT") == std::string::npos;
     }
 
+    [[nodiscard]] static bool aminoacid_is_valid(const std::string &str) {
+        return str.find_first_not_of("FLIMVSPTAY*HQNKDECWRG") == std::string::npos;
+    }
+
     static int kmer_to_int(std::string& kmer) {
         int bitmap = 0;
         int A = 0b00;
@@ -182,7 +186,6 @@ private:
     }
 
     static bool check_constraint(std::string& sequence_a, std::string& sequence_b) {
-
         if(sequence_a.length() >= sequence_b.length()*2 || sequence_b.length() >= sequence_a.length()*2)
             return false;
 
@@ -213,6 +216,8 @@ private:
 
             for(int window = 0; window < sequence.length() - this->kmer_size + 1; window++) {
                 std::string aminoacid = sequence.substr(window, 2);
+                if(!aminoacid_is_valid(aminoacid))
+                    continue;
                 std::string kmer = PreFilter::aminoacid_to_nucleotides(aminoacid);
 
                 if(kmer_is_valid(kmer)) {
