@@ -123,7 +123,7 @@ private:
 
     void sanitize_alphabet() {
         for(auto &i : this->alphabet) {
-            std::string temp = reinterpret_cast<const char *>(i);
+            std::string temp(1, i);
             if(temp.find_first_not_of("FLIMVSPTAY*HQNKDECWRG") != std::string::npos)
                 this->alphabet.erase(i);
         }

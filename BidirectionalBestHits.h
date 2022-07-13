@@ -4,14 +4,10 @@
 #include <iostream>
 #include <string>
 #include <vector>
-#include <map>
-#include <bitset>
 #include <unordered_map>
-#include <cmath>
 #include <unordered_set>
 #include <algorithm>
 #include "include/kvalue.h"
-#include <omp.h>
 #include "include/global_options.h"
 
 class BidirectionalBestHits {

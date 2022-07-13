@@ -35,8 +35,6 @@ public:
         this->collect_sequences_id_from_gene_pair(&gene_pair_input);
     }
 
-    ~Omologus() = default;
-
     /*
      * initializes a map for each sequence with the first k-mer and the counter at 0
      */

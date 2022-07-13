@@ -5,16 +5,10 @@
 #include <string>
 #include <utility>
 #include <vector>
-#include <map>
-#include <bitset>
 #include <unordered_map>
 #include <cmath>
 #include <unordered_set>
-#include <algorithm>
 #include "include/kvalue.h"
-#include <omp.h>
-#include <sys/time.h>
-#include <array>
 #include "include/global_options.h"
 #include "Omologus.h"
 
@@ -101,8 +95,7 @@ private:
                     if(this->check_constraint(a, b))
                         gene_id_pair.emplace_back(std::make_pair(a, b));
 
-            Omologus omologus = Omologus(this->sequences, gene_id_pair, this->sequences_type, this->kmer_size,
-                                         reinterpret_cast<std::ofstream *>(&this->log_stream));
+            Omologus omologus = Omologus(this->sequences, gene_id_pair, this->sequences_type, this->kmer_size, this->log_stream);
 
             omologus.init_sequences_kmers();
             omologus.calculate_kmer_multiplicity();
@@ -115,7 +108,6 @@ private:
                     this->paralog_best_hits.emplace_back(std::make_tuple(it.first, gene_b.first, gene_b.second));
 
             gene_id_pair.clear();
-            omologus.~Omologus();
         }
     }
 
