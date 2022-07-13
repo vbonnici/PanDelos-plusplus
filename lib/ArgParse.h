@@ -1,5 +1,5 @@
-#ifndef PANDELOS_PLUSPLUS_HELPER_H
-#define PANDELOS_PLUSPLUS_HELPER_H
+#ifndef PANDELOS_PLUSPLUS_ARGPARSE_H
+#define PANDELOS_PLUSPLUS_ARGPARSE_H
 #include <iostream>
 #include <string>
 #include "argagg/argagg.hpp"
@@ -52,7 +52,7 @@ parser argparser {
         }
 };
 
-class Helper {
+class ArgParser {
 public:
     void parse_arguments(int argc, char* argv[]) {
         this->do_args_parsing(argc, argv);
@@ -146,4 +146,4 @@ private:
         }
     }
 };
-#endif //PANDELOS_PLUSPLUS_HELPER_H
+#endif //PANDELOS_PLUSPLUS_ARGPARSE_H

@@ -6,23 +6,23 @@
 #include "Paralog.h"
 #include <sys/time.h>
 #include "lib/Kvalue.h"
-#include "lib/helper.h"
+#include "lib/ArgParse.h"
 
 
 int main(int argc, char* argv[]){
-    Helper helper = Helper();
+    ArgParser parser = ArgParser();
 
-    helper.parse_arguments(argc, argv);
+    parser.parse_arguments(argc, argv);
 
     int kmer_size;
 
     struct timeval tempo{};
     double t1, t2;
 
-    const char* filename = helper.get_filename();
-    int sequences_type = helper.get_sequences_type();
-    std::string output = helper.get_output();
-    std::string log = helper.get_log();
+    const char* filename = parser.get_filename();
+    int sequences_type = parser.get_sequences_type();
+    std::string output = parser.get_output();
+    std::string log = parser.get_log();
 
     std::ofstream log_stream(log, std::ofstream::trunc);
 

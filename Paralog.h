@@ -128,7 +128,7 @@ private:
             best_hits_local.reserve(genome_a.size() * genome_b.size());
 
             for(auto &geneid_a: genome_a)
-                for(auto &geneid_b : genome_b) {
+                for(auto &geneid_b : genome_b) {        //+1 geneid_b
                     sequence_a = this->sequences->operator[](geneid_a);
                     sequence_b = this->sequences->operator[](geneid_b);
 

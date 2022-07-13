@@ -27,14 +27,13 @@ public:
                        const std::vector<std::vector<int>>& genome_sequencesid,
                        const int sequences_type,
                        std::ofstream* log_stream) :
-        jaccard_threshold(0.5), sequences_type(sequences_type), kmer_size(6) {
+        jaccard_threshold(0.8), sequences_type(sequences_type), kmer_size(6) {
         this->log_stream = log_stream;
 
         this->sequences = &sequences;
         this->genome_sequencesid = &genome_sequencesid;
         this->best_hits.reserve(sequences.size()*sequences.size());
         *this->log_stream << "byte riservati per prefilter best hits: " << sequences.size() * sequences.size() << std::endl;
-
     }
 
     void init_sequences_kmers() {
