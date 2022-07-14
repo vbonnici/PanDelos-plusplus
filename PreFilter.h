@@ -112,7 +112,7 @@ public:
                         jaccard_similarity = (double) counter_min / counter_max;
 
                         if (counter_max > 0 && jaccard_similarity > this->jaccard_threshold) {
-                            //*this->log_stream << geneid_a << " " << geneid_b << " prefilter jaccard similarity " << jaccard_similarity << std::endl;
+                            *this->log_stream << geneid_a << " " << geneid_b << " prefilter jaccard similarity " << jaccard_similarity << std::endl;
 
                             best_hits_local.emplace_back(std::make_pair(geneid_a, geneid_b));
                         }
@@ -216,15 +216,15 @@ private:
 
             for(int window = 0; window < sequence.length() - this->kmer_size + 1; window++) {
                 std::string aminoacid = sequence.substr(window, 2);
+
                 if(!aminoacid_is_valid(aminoacid))
                     continue;
+
                 std::string kmer = PreFilter::aminoacid_to_nucleotides(aminoacid);
 
-                if(kmer_is_valid(kmer)) {
-                    int kmer_in_int = PreFilter::kmer_to_int(kmer);
+                int kmer_in_int = PreFilter::kmer_to_int(kmer);
 
-                    this->sequences_kmers.operator[](k).operator[](kmer_in_int) += 1;
-                }
+                this->sequences_kmers.operator[](k).operator[](kmer_in_int) += 1;
             }
         }
     }
