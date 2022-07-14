@@ -140,7 +140,7 @@ public:
             }
 
             jaccard_similarity = (double) counter_min / counter_max;
-            //*this->log_stream << "2 - jaccard similarity " << jaccard_similarity  << std::endl;
+            *this->log_stream << id_gene_a << " " << id_gene_b << " omologus jaccard similarity " << jaccard_similarity << std::endl;
 
             if (counter_max > 0 && jaccard_similarity > jaccard_threshold) {
                 auto result_a = this->map_hits.find(id_gene_a);

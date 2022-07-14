@@ -42,6 +42,12 @@ public:
         return this->map_best_hits;
     }
 
+    void print_map_best_hits() {
+        for(auto &a : this->map_best_hits)
+            for(auto &b : a.second)
+                *this->log_stream << a.first << " " << b.first << " " << b.second << std::endl;
+    }
+
 private:
     std::ofstream* log_stream;
     std::unordered_map<int, std::unordered_map<int, double>>* map_hits;
