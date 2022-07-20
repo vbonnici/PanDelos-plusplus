@@ -83,13 +83,13 @@ public:
     }
 
     void calculate_best_hits(double jaccard_threshold = 0.0) {
+        int id_gene_a;
+        int id_gene_b;
         unsigned int value_a;
         unsigned int value_b;
         unsigned int counter_min;
         unsigned int counter_max;
         double jaccard_similarity;
-        std::string sequence_a;
-        std::string sequence_b;
 
         //non inserisce duplicati
         for (auto &i: *this->gene_pair) {
@@ -100,10 +100,10 @@ public:
         if(!debug)
             omp_set_num_threads(omp_get_num_procs());
 
-        #pragma omp parallel for private(jaccard_similarity, counter_min, counter_max, sequence_a, sequence_b, value_a, value_b)
+        #pragma omp parallel for private(jaccard_similarity, counter_min, counter_max, value_a, value_b, id_gene_a, id_gene_b)
         for (auto &i: *this->gene_pair) {
-            int id_gene_a = i.first;
-            int id_gene_b = i.second;
+            id_gene_a = i.first;
+            id_gene_b = i.second;
 
             counter_min = 0;
             counter_max = 0;
@@ -141,6 +141,7 @@ public:
 
             jaccard_similarity = (double) counter_min / counter_max;
             //*this->log_stream << id_gene_a << " " << id_gene_b << " omologus jaccard similarity " << jaccard_similarity << std::endl;
+
 
             if (counter_max > 0 && jaccard_similarity >= jaccard_threshold) {
                 auto result_a = this->map_hits.find(id_gene_a);
