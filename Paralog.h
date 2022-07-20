@@ -25,13 +25,17 @@ public:
         this->sequences = std::move(sequences_prefilter);
         this->genome_sequencesid = &genome_sequencesid;
         this->vector_tuple_bbh = &vector_tuple_bbh;
+
+        this->genome_counter = this->genome_sequencesid->size();
     }
 
 
     void calculate_paralog() {
-        this->genome_minimum_jaccard.reserve(this->genome_sequencesid->size());
+        this->genome_minimum_jaccard.reserve(this->genome_counter);
+        this->max_genes_id.reserve(this->genome_counter);
+        this->min_genes_id.reserve(this->genome_counter);
 
-        for(int i = 0; i < this->genome_sequencesid->size(); ++i)
+        for(int i = 0; i < this->genome_counter; ++i)
             this->genome_minimum_jaccard.push_back(1.0);
 
         this->compute_minimum_jaccard();
@@ -46,6 +50,7 @@ private:
     std::ofstream* log_stream;
     int kmer_size;
     const int sequences_type; //0 amino acids, 1 nucleotides
+    int genome_counter;
     std::vector<std::vector<int>>* genome_sequencesid;
     std::vector<double> genome_minimum_jaccard;
     std::vector<std::string> sequences;
@@ -56,42 +61,43 @@ private:
 
 
     void compute_minimum_jaccard() {
-        for(int i = 0; i < this->genome_sequencesid->size(); ++i) {
+        for(int i = 0; i < this->genome_counter; ++i) {
             auto genes = this->genome_sequencesid->operator[](i);
 
             auto max = max_element(std::begin(genes), std::end(genes));
             auto min = min_element(std::begin(genes), std::end(genes));
 
-            this->max_genes_id.push_back(*max);
-            this->min_genes_id.push_back(*min);
+            this->max_genes_id.operator[](i) = *max;
+            this->min_genes_id.operator[](i) = *min;
         }
 
-        for(int i = 0; i < this->genome_minimum_jaccard.size(); ++i) {
+        for(int i = 0; i < this->genome_counter; ++i) {
             for(auto &tuple : *this->vector_tuple_bbh) {
-                if(std::get<0>(tuple) <= this->max_genes_id.operator[](i)) {
-                    //*this->log_stream << std::get<2>(tuple) << std::endl;
+                if(std::get<0>(tuple) >= this->min_genes_id.operator[](i) && std::get<0>(tuple) <= this->max_genes_id.operator[](i)) {
                     if(std::get<2>(tuple) < this->genome_minimum_jaccard.operator[](i))
                         this->genome_minimum_jaccard.operator[](i) = std::get<2>(tuple);
                 }
             }
         }
 
-        for(int i = 0; i < this->genome_minimum_jaccard.size(); ++i) {
+        for(int i = 0; i < this->genome_counter; ++i) {
             *this->log_stream << "genome id " << i << " minimum jaccard " << this->genome_minimum_jaccard.operator[](i) << std::endl;
-
         }
     }
 
     void calculate_paralog_best_hits() {
+        int max_gene_id;
+        int min_gene_id;
 
-        for(int i = 0; i < this->genome_sequencesid->size(); ++i) {
-            int max_gene_id = this->max_genes_id.operator[](i);
-            int min_gene_id = this->min_genes_id.operator[](i);
+        for(int i = 0; i < this->genome_counter; ++i) {
+            max_gene_id = this->max_genes_id.operator[](i);
+            min_gene_id = this->min_genes_id.operator[](i);
 
             std::vector<std::pair<int, int>> gene_id_pair;
+            gene_id_pair.reserve(max_gene_id*max_gene_id);
 
             for(int a = min_gene_id; a <= max_gene_id; ++a)
-                for(int b = a+1; a <= max_gene_id; ++a)
+                for(int b = a+1; b <= max_gene_id; ++b)
                     if(this->check_constraint(a, b))
                         gene_id_pair.emplace_back(std::make_pair(a, b));
 
