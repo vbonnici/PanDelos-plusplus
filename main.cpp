@@ -56,6 +56,7 @@ int main(int argc, char* argv[]){
     /*** BestHits ***/
     BestHits bh = BestHits(map_hits, &log_stream);
     bh.compute_best_hits();
+    //bh.print_map_best_hits();
     auto map_best_hits = bh.get_map_best_hits();
 
     /*** BidirectionalBestHits ***/
