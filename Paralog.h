@@ -77,6 +77,11 @@ private:
                     if(std::get<2>(tuple) < this->genome_minimum_jaccard.operator[](i))
                         this->genome_minimum_jaccard.operator[](i) = std::get<2>(tuple);
                 }
+
+                if(std::get<1>(tuple) >= this->min_genes_id.operator[](i) && std::get<1>(tuple) <= this->max_genes_id.operator[](i)) {
+                    if(std::get<2>(tuple) < this->genome_minimum_jaccard.operator[](i))
+                        this->genome_minimum_jaccard.operator[](i) = std::get<2>(tuple);
+                }
             }
         }
 
