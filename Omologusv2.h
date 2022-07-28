@@ -17,33 +17,34 @@
 
 template <typename KeyType, typename LeftValue, typename RightValue>
 std::map<KeyType, std::pair<LeftValue, RightValue>>
-UnionMaps(const std::map<KeyType, LeftValue>& a1, const std::map<KeyType, RightValue>& a2) {
-    std::map<KeyType, std::pair<LeftValue, RightValue>> result;
-    typename std::map<KeyType, LeftValue>::const_iterator a1i  = a1.begin();
-    typename std::map<KeyType, RightValue>::const_iterator a2i = a2.begin();
+UnionMaps(const std::map<KeyType, LeftValue>& map1, const std::map<KeyType, RightValue>& map2) {
 
-    while (a1i != a1.end() && a2i != a2.end()) {
-        if (a1i->first < a2i->first) {
-            result.insert(std::make_pair(a1i->first, std::make_pair(a1i->second, 0)));
-            a1i++;
-        } else if (a1i->first == a2i->first) {
-            result.insert(std::make_pair(a1i->first, std::make_pair(a1i->second, a2i->second)));
-            a1i++;
-            a2i++;
-        } else if (a1i->first > a2i->first) {
-            result.insert(std::make_pair(a2i->first, std::make_pair(0, a2i->second)));
-            a2i++;
+    std::map<KeyType, std::pair<LeftValue, RightValue>> result;
+    auto it_map1  = map1.begin();
+    auto it_map2 = map2.begin();
+
+    while (it_map1 != map1.end() && it_map2 != map2.end()) {
+        if (it_map1->first < it_map2->first) {
+            result.insert(std::make_pair(it_map1->first, std::make_pair(it_map1->second, 0)));
+            it_map1++;
+        } else if (it_map1->first == it_map2->first) {
+            result.insert(std::make_pair(it_map1->first, std::make_pair(it_map1->second, it_map2->second)));
+            it_map1++;
+            it_map2++;
+        } else if (it_map1->first > it_map2->first) {
+            result.insert(std::make_pair(it_map2->first, std::make_pair(0, it_map2->second)));
+            it_map2++;
         }
     }
 
-    while (a1i != a1.end()) {
-        result.insert(std::make_pair(a1i->first, std::make_pair(a1i->second, 0)));
-        a1i++;
+    while (it_map1 != map1.end()) {
+        result.insert(std::make_pair(it_map1->first, std::make_pair(it_map1->second, 0)));
+        it_map1++;
     }
 
-    while (a2i != a2.end()) {
-        result.insert(std::make_pair(a2i->first, std::make_pair(0, a2i->second)));
-        a2i++;
+    while (it_map2 != map2.end()) {
+        result.insert(std::make_pair(it_map2->first, std::make_pair(0, it_map2->second)));
+        it_map2++;
     }
 
     return result;
@@ -89,10 +90,7 @@ public:
                 if(this->sequences_type == 1)
                     kmer = sequence.substr(window, this->kmer_size);
                 else {
-                    std::string aminoacid = sequence.substr(window, this->kmer_size); // /3
-
-                    if(!aminoacid_is_valid(aminoacid))
-                        continue;
+                    std::string aminoacid = sequence.substr(window, this->kmer_size);
 
                     kmer = Omologusv2::aminoacid_to_nucleotides(aminoacid);
                 }
@@ -109,8 +107,6 @@ public:
                 }
             }
         }
-
-        //*this->log_stream << "2 - kmer_multiplicity calcolate" << std::endl;
     }
 
     void calculate_best_hits(double jaccard_threshold = 0.0) {
@@ -142,28 +138,28 @@ public:
             auto kmer_key_a = this->sequences_kmers.find(id_gene_a);
             auto kmer_key_b = this->sequences_kmers.find(id_gene_b);
 
-            std::map<std::string, int> temp_map1;
+            std::map<std::string, int> kmerstring_map_a;
 
-            auto map_a = kmer_key_a->second;
+            auto kmerbit_map_a = kmer_key_a->second;
 
-            for(auto &f : map_a)
-                temp_map1.insert(std::make_pair(f.first.to_string(), f.second));
+            for(auto &kmerbit : kmerbit_map_a)
+                kmerstring_map_a.insert(std::make_pair(kmerbit.first.to_string(), kmerbit.second));
 
-            std::map<std::string, int> temp_map2;
+            std::map<std::string, int> kmerstring_map_b;
 
-            auto map_b = kmer_key_b->second;
+            auto kmerbit_map_b = kmer_key_b->second;
 
-            for(auto &g : map_b)
-                temp_map2.insert(std::make_pair(g.first.to_string(), g.second));
+            for(auto &kmerbit : kmerbit_map_b)
+                kmerstring_map_b.insert(std::make_pair(kmerbit.first.to_string(), kmerbit.second));
 
-            auto result = UnionMaps<std::string, int, int>(temp_map1, temp_map2);
+            auto kmerstring_map_a_b = UnionMaps<std::string, int, int>(kmerstring_map_a, kmerstring_map_b);
 
-            for(auto &h : result) {
+            for(auto &kmer : kmerstring_map_a_b) {
 
-                auto y = h.second;
+                auto kmercounter_a_b = kmer.second;
 
-                value_a = y.first;
-                value_b = y.second;
+                value_a = kmercounter_a_b.first;
+                value_b = kmercounter_a_b.second;
 
                 if(value_a > value_b) {
                     counter_min += value_b;
@@ -194,7 +190,6 @@ public:
         }
 
         //*this->log_stream << "2 - compute best hits " << std::endl;
-
     }
 
     std::vector<int>& get_sequences_id() {
@@ -230,11 +225,6 @@ private:
             return str.length() == this->kmer_size*3 && str.find_first_not_of("ACGT") == std::string::npos;
         else
             return str.length() == this->kmer_size && str.find_first_not_of("ACGT") == std::string::npos;
-    }
-
-    [[nodiscard]] static bool aminoacid_is_valid(const std::string &str) {
-        //return str.find_first_not_of("FLIMVSPTAY*HQNKDECWRG") == std::string::npos;
-        return true;
     }
 
     static std::bitset<kvalue> kmer_to_bit(std::string& kmer) {

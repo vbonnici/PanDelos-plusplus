@@ -23,16 +23,12 @@ public:
     explicit Kvalue(const std::vector<std::string>* sequences_input, const char* filename, int sequences_type, const std::string& output, const std::string& logfile, std::ofstream* log_stream) {
         this->log_stream = log_stream;
 
-        //static const char aminoacid[] = {'F', 'L', 'I', 'M', 'V', 'S', 'P', 'T', 'A', 'Y', '*', 'H', 'Q', 'N', 'K', 'D', 'E', 'C', 'W', 'R', 'G'};
-
         for (auto &i: *sequences_input)
             for(char a : i)
-                //if (std::find(std::begin(aminoacid), std::end(aminoacid), a) != std::end(aminoacid))
-                    this->alphabet.insert(a);
+                this->alphabet.insert(a);
 
         *this->log_stream << "alfabeto calcolato: " << std::endl;
 
-        //print alphabet
         for(auto &i : this->alphabet)
             *this->log_stream << i << " ";
         *this->log_stream << std::endl;
@@ -41,17 +37,11 @@ public:
         for(auto &i : *sequences_input)
             this->genes_lenght += i.length();
 
-        if(sequences_type == 0) {
+        if(sequences_type == 0)
             this->kmer_size = (int)(log(this->genes_lenght) / log(this->alphabet.size()));
-
-            //if(this->kmer_size % 3 != 0)
-                //this->kmer_size = this->roundUp(this->kmer_size, 3);
-        }
         else
             this->kmer_size = (int)(log(this->genes_lenght) / log(4));
 
-        //this->kmer_size = 3;
-        
         *this->log_stream << "1 - gene length: " << this->genes_lenght << " kmer size " << this->kmer_size << std::endl;
 
         this->check_kvalue_file(filename, sequences_type, output, logfile);
@@ -112,17 +102,6 @@ private:
             system(command.c_str());
             exit(0);
         }
-    }
-
-     int roundUp(int numToRound, int multiple) {
-        if (multiple == 0)
-            return numToRound;
-
-        int remainder = numToRound % multiple;
-        if (remainder == 0)
-            return numToRound;
-
-        return numToRound + multiple - remainder;
     }
 };
 
