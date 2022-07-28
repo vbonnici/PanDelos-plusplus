@@ -12,6 +12,7 @@
 #include "include/global_options.h"
 #include "Omologus.h"
 #include "Omologusv2.h"
+#include "PreFilter.h"
 
 class Paralog {
 public:
@@ -24,10 +25,10 @@ public:
 
         this->log_stream = log_stream;
         this->sequences = std::move(sequences_prefilter);
-        this->genome_sequencesid = &genome_sequencesid;
+        this->genome_sequencesid = genome_sequencesid;
         this->vector_tuple_bbh = &vector_tuple_bbh;
 
-        this->genome_counter = this->genome_sequencesid->size();
+        this->genome_counter = this->genome_sequencesid.size();
     }
 
 
@@ -52,7 +53,7 @@ private:
     int kmer_size;
     const int sequences_type; //0 amino acids, 1 nucleotides
     int genome_counter;
-    std::vector<std::vector<int>>* genome_sequencesid;
+    std::vector<std::vector<int>> genome_sequencesid;
     std::vector<double> genome_minimum_jaccard;
     std::vector<std::string> sequences;
     std::vector<std::tuple<int, int, double>>* vector_tuple_bbh;
@@ -63,7 +64,7 @@ private:
 
     void compute_minimum_jaccard() {
         for(int i = 0; i < this->genome_counter; ++i) {
-            auto genes = this->genome_sequencesid->operator[](i);
+            auto genes = this->genome_sequencesid.operator[](i);
 
             auto max = max_element(std::begin(genes), std::end(genes));
             auto min = min_element(std::begin(genes), std::end(genes));
@@ -107,7 +108,14 @@ private:
                     if(this->check_constraint(a, b))
                         gene_id_pair.emplace_back(std::make_pair(a, b));
 
-            Omologusv2 omologus = Omologusv2(this->sequences, gene_id_pair, this->sequences_type, this->kmer_size, this->log_stream);
+
+            PreFilter prefilter = PreFilter(this->sequences, this->genome_sequencesid, this->sequences_type, this->log_stream);
+            prefilter.init_sequences_kmers();
+            prefilter.calculate_kmer_multiplicity();
+            prefilter.calculate_best_hits(gene_id_pair, this->genome_minimum_jaccard.operator[](i));
+            auto prefilter_best_hits = prefilter.get_best_hits();
+
+            Omologusv2 omologus = Omologusv2(this->sequences, prefilter_best_hits, this->sequences_type, this->kmer_size, this->log_stream);
 
             omologus.init_sequences_kmers();
             omologus.calculate_kmer_multiplicity();

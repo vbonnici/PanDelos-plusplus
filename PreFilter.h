@@ -53,6 +53,70 @@ public:
 
         *this->log_stream << "1 - kmer_multiplicity calcolate" << std::endl;
     }
+
+    void calculate_best_hits(const std::vector<std::pair<int, int>>& gene_id_pair_in, double jaccard_threshold_in) {
+        unsigned int value_a;
+        unsigned int value_b;
+        unsigned int counter_min;
+        unsigned int counter_max;
+        double jaccard_similarity;
+        std::string sequence_a;
+        std::string sequence_b;
+
+        if(!debug)
+            omp_set_num_threads(omp_get_num_procs());
+
+        #pragma omp parallel
+        {
+            std::vector<std::pair<int, int>> best_hits_local;
+            #pragma omp for private(jaccard_similarity, counter_min, counter_max, sequence_a, sequence_b, value_a, value_b) schedule(static)
+            for(auto &i : gene_id_pair_in) {
+
+                sequence_a = this->sequences->operator[](i.first);
+                sequence_b = this->sequences->operator[](i.second);
+
+                counter_min = 0;
+                counter_max = 0;
+                jaccard_similarity = 0;
+
+                std::array<unsigned int, 4095> kmer_array_a = this->sequences_kmers.operator[](i.first);
+                std::array<unsigned int, 4095> kmer_array_b = this->sequences_kmers.operator[](i.second);
+
+                if (!PreFilter::check_constraint(sequence_a, sequence_b))
+                    continue;
+
+                for (int j = 0; j < 4095; ++j) {
+                    value_a = kmer_array_a[j];
+                    value_b = kmer_array_b[j];
+
+                    if(value_a > value_b) {
+                        counter_min += value_b;
+                        counter_max += value_a;
+                    }
+                    else {
+                        counter_min += value_a;
+                        counter_max += value_b;
+                    }
+                }
+
+                jaccard_similarity = (double) counter_min / counter_max;
+
+                if (counter_max > 0 && jaccard_similarity > jaccard_threshold_in) {
+                    //*this->log_stream << geneid_a << " " << geneid_b << " prefilter jaccard similarity " << jaccard_similarity << std::endl;
+
+                    best_hits_local.emplace_back(std::make_pair(i.first, i.second));
+                }
+            }
+
+            for (int t = 0; t < omp_get_num_threads(); t++) {
+                #pragma omp barrier
+                if (t == omp_get_thread_num()) {
+                    this->best_hits.insert(this->best_hits.end(), std::make_move_iterator(best_hits_local.begin()), std::make_move_iterator(best_hits_local.end()));
+                }
+            }
+        };
+
+    }
     
     void calculate_best_hits() {
         unsigned int value_a;
