@@ -11,6 +11,7 @@
 #include "include/kvalue.h"
 #include "include/global_options.h"
 #include "Omologus.h"
+#include "Omologusv2.h"
 
 class Paralog {
 public:
@@ -106,7 +107,7 @@ private:
                     if(this->check_constraint(a, b))
                         gene_id_pair.emplace_back(std::make_pair(a, b));
 
-            Omologus omologus = Omologus(this->sequences, gene_id_pair, this->sequences_type, this->kmer_size, this->log_stream);
+            Omologusv2 omologus = Omologusv2(this->sequences, gene_id_pair, this->sequences_type, this->kmer_size, this->log_stream);
 
             omologus.init_sequences_kmers();
             omologus.calculate_kmer_multiplicity();

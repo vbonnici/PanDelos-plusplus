@@ -2,6 +2,7 @@
 #include <string>
 #include "PangeneIData.h"
 #include "Omologus.h"
+#include "Omologusv2.h"
 #include "BestHits.h"
 #include "BidirectionalBestHits.h"
 #include "PreFilter.h"
@@ -47,7 +48,7 @@ int main(int argc, char* argv[]){
     auto prefilter_best_hits = filter.get_best_hits();
 
     /*** Omologus ***/
-    Omologus omologus = Omologus(sequences, prefilter_best_hits, sequences_type, kmer_size, &log_stream);
+    Omologusv2 omologus = Omologusv2(sequences, prefilter_best_hits, sequences_type, kmer_size, &log_stream);
     omologus.init_sequences_kmers();
     omologus.calculate_kmer_multiplicity();
     omologus.calculate_best_hits();
@@ -56,11 +57,11 @@ int main(int argc, char* argv[]){
     /*** BestHits ***/
     BestHits bh = BestHits(map_hits, &log_stream);
     bh.compute_best_hits();
-    //bh.print_map_best_hits();
+    //bh.print_map_hits();
     auto map_best_hits = bh.get_map_best_hits();
 
     /*** BidirectionalBestHits ***/
-    BidirectionalBestHits bbh = BidirectionalBestHits(map_best_hits, &log_stream);
+    BidirectionalBestHits bbh = BidirectionalBestHits(map_hits, &log_stream); //map_best_hits
     bbh.calculate_bbh();
     auto vector_tuple_bbh = bbh.get_vector_tuple_bbh();
 
@@ -74,13 +75,13 @@ int main(int argc, char* argv[]){
     output_stream << "Ortologhi " << std::endl;
 
     for(auto &i : vector_tuple_bbh) {
-        output_stream << std::get<0>(i) << " " << std::get<1>(i) << " " << std::get<2>(i) << std::endl;
+        output_stream << std::get<0>(i) << '\t' << std::get<1>(i) << '\t' << std::get<2>(i) << std::endl;
     }
 
     output_stream << "Paraloghi: " << std::endl;
 
     for(auto &i : paralog_best_hits) {
-        output_stream << std::get<0>(i) << " " << std::get<1>(i) << " " << std::get<2>(i) << std::endl;
+        output_stream << std::get<0>(i) << '\t' << std::get<1>(i) << '\t' << std::get<2>(i) << std::endl;
     }
 
     output_stream.close();

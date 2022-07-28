@@ -27,7 +27,7 @@ public:
                        const std::vector<std::vector<int>>& genome_sequencesid,
                        const int sequences_type,
                        std::ofstream* log_stream) :
-        jaccard_threshold(0.8), sequences_type(sequences_type), kmer_size(6) {
+        jaccard_threshold(0.7), sequences_type(sequences_type), kmer_size(6) {
         this->log_stream = log_stream;
 
         this->sequences = &sequences;
@@ -157,7 +157,8 @@ private:
     }
 
     [[nodiscard]] static bool aminoacid_is_valid(const std::string &str) {
-        return str.find_first_not_of("FLIMVSPTAY*HQNKDECWRG") == std::string::npos;
+        //return str.find_first_not_of("FLIMVSPTAY*HQNKDECWRG") == std::string::npos;
+        return true;
     }
 
     static int kmer_to_int(std::string& kmer) {
@@ -219,6 +220,8 @@ private:
 
                 if(!aminoacid_is_valid(aminoacid))
                     continue;
+
+                //*this->log_stream << aminoacid << std::endl;
 
                 std::string kmer = PreFilter::aminoacid_to_nucleotides(aminoacid);
 

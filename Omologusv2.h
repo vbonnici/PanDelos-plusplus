@@ -1,5 +1,5 @@
-#ifndef PANDELOS_PLUSPLUS_OMOLOGUS_H
-#define PANDELOS_PLUSPLUS_OMOLOGUS_H
+#ifndef PANDELOS_PLUSPLUS_OMOLOGUSv2_H
+#define PANDELOS_PLUSPLUS_OMOLOGUSv2_H
 
 #include <iostream>
 #include <string>
@@ -14,15 +14,44 @@
 #include <omp.h>
 #include "include/global_options.h"
 
-template<size_t sz> struct bitset_comparer {
-    bool operator() (const std::bitset<sz> &b1, const std::bitset<sz> &b2) const {
-        return b1.to_ulong() < b2.to_ulong();
-    }
-};
 
-class Omologus {
+template <typename KeyType, typename LeftValue, typename RightValue>
+std::map<KeyType, std::pair<LeftValue, RightValue>>
+UnionMaps(const std::map<KeyType, LeftValue>& a1, const std::map<KeyType, RightValue>& a2) {
+    std::map<KeyType, std::pair<LeftValue, RightValue>> result;
+    typename std::map<KeyType, LeftValue>::const_iterator a1i  = a1.begin();
+    typename std::map<KeyType, RightValue>::const_iterator a2i = a2.begin();
+
+    while (a1i != a1.end() && a2i != a2.end()) {
+        if (a1i->first < a2i->first) {
+            result.insert(std::make_pair(a1i->first, std::make_pair(a1i->second, 0)));
+            a1i++;
+        } else if (a1i->first == a2i->first) {
+            result.insert(std::make_pair(a1i->first, std::make_pair(a1i->second, a2i->second)));
+            a1i++;
+            a2i++;
+        } else if (a1i->first > a2i->first) {
+            result.insert(std::make_pair(a2i->first, std::make_pair(0, a2i->second)));
+            a2i++;
+        }
+    }
+
+    while (a1i != a1.end()) {
+        result.insert(std::make_pair(a1i->first, std::make_pair(a1i->second, 0)));
+        a1i++;
+    }
+
+    while (a2i != a2.end()) {
+        result.insert(std::make_pair(a2i->first, std::make_pair(0, a2i->second)));
+        a2i++;
+    }
+
+    return result;
+}
+
+class Omologusv2 {
 public:
-    explicit Omologus(const std::vector<std::string>&sequences,
+    explicit Omologusv2(const std::vector<std::string>&sequences,
                       const std::vector<std::pair<int, int>>&gene_pair_input,
                       const int sequences_type,
                       const int kmer_size,
@@ -65,7 +94,7 @@ public:
                     if(!aminoacid_is_valid(aminoacid))
                         continue;
 
-                    kmer = Omologus::aminoacid_to_nucleotides(aminoacid);
+                    kmer = Omologusv2::aminoacid_to_nucleotides(aminoacid);
                 }
 
                 if(kmer_is_valid(kmer)) {
@@ -113,23 +142,28 @@ public:
             auto kmer_key_a = this->sequences_kmers.find(id_gene_a);
             auto kmer_key_b = this->sequences_kmers.find(id_gene_b);
 
-            for (int j = 0; j < 1 << kvalue; j++) {
-                std::bitset<kvalue> kmer(j);
+            std::map<std::string, int> temp_map1;
 
-                auto result_a = kmer_key_a->second.find(kmer);
-                auto result_b = kmer_key_b->second.find(kmer);
+            auto map_a = kmer_key_a->second;
 
-                value_a = 0;
-                value_b = 0;
+            for(auto &f : map_a)
+                temp_map1.insert(std::make_pair(f.first.to_string(), f.second));
 
-                if (result_a != kmer_key_a->second.end())
-                    if (result_a->first == kmer)
-                        value_a = result_a->second;
+            std::map<std::string, int> temp_map2;
 
+            auto map_b = kmer_key_b->second;
 
-                if (result_b != kmer_key_b->second.end())
-                    if (result_b->first == kmer)
-                        value_b = result_b->second;
+            for(auto &g : map_b)
+                temp_map2.insert(std::make_pair(g.first.to_string(), g.second));
+
+            auto result = UnionMaps<std::string, int, int>(temp_map1, temp_map2);
+
+            for(auto &h : result) {
+
+                auto y = h.second;
+
+                value_a = y.first;
+                value_b = y.second;
 
                 if(value_a > value_b) {
                     counter_min += value_b;
@@ -140,6 +174,7 @@ public:
                     counter_max += value_b;
                 }
             }
+
 
             jaccard_similarity = (double) counter_min / counter_max;
             //*this->log_stream << id_gene_a << " " << id_gene_b << " omologus jaccard similarity " << jaccard_similarity << std::endl;
@@ -315,4 +350,4 @@ private:
         return kmer;
     }
 };
-#endif //PANDELOS_PLUSPLUS_OMOLOGUS_H
+#endif //PANDELOS_PLUSPLUS_OMOLOGUSv2_H

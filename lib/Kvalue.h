@@ -23,11 +23,11 @@ public:
     explicit Kvalue(const std::vector<std::string>* sequences_input, const char* filename, int sequences_type, const std::string& output, const std::string& logfile, std::ofstream* log_stream) {
         this->log_stream = log_stream;
 
-        static const char aminoacid[] = {'F', 'L', 'I', 'M', 'V', 'S', 'P', 'T', 'A', 'Y', '*', 'H', 'Q', 'N', 'K', 'D', 'E', 'C', 'W', 'R', 'G'};
+        //static const char aminoacid[] = {'F', 'L', 'I', 'M', 'V', 'S', 'P', 'T', 'A', 'Y', '*', 'H', 'Q', 'N', 'K', 'D', 'E', 'C', 'W', 'R', 'G'};
 
         for (auto &i: *sequences_input)
             for(char a : i)
-                if (std::find(std::begin(aminoacid), std::end(aminoacid), a) != std::end(aminoacid))
+                //if (std::find(std::begin(aminoacid), std::end(aminoacid), a) != std::end(aminoacid))
                     this->alphabet.insert(a);
 
         *this->log_stream << "alfabeto calcolato: " << std::endl;
@@ -44,12 +44,14 @@ public:
         if(sequences_type == 0) {
             this->kmer_size = (int)(log(this->genes_lenght) / log(this->alphabet.size()));
 
-            if(this->kmer_size % 3 != 0)
-                this->kmer_size = this->roundUp(this->kmer_size, 3);
+            //if(this->kmer_size % 3 != 0)
+                //this->kmer_size = this->roundUp(this->kmer_size, 3);
         }
         else
             this->kmer_size = (int)(log(this->genes_lenght) / log(4));
 
+        //this->kmer_size = 3;
+        
         *this->log_stream << "1 - gene length: " << this->genes_lenght << " kmer size " << this->kmer_size << std::endl;
 
         this->check_kvalue_file(filename, sequences_type, output, logfile);
@@ -70,7 +72,13 @@ private:
     std::ofstream* log_stream;
 
     void check_kvalue_file(const char* filename, int sequences_type, const std::string& output, const std::string& logfile) const {
-        int kvalue_size_expected = this->kmer_size*2; //2 bit per ogni nucleotide
+        int kvalue_size_expected;
+
+        if(sequences_type == 0)
+            kvalue_size_expected = this->kmer_size*3*2; //2 bit per ogni nucleotide
+        else
+            kvalue_size_expected = this->kmer_size*2;
+
 
         if(kvalue != kvalue_size_expected) {
             std::ofstream ofs;
@@ -94,7 +102,7 @@ private:
             std::stringstream ss;
 
             if(debug)
-                ss << "g++ -w -std=c++17 -fopenmp -O3 ../main.cpp && ./a.out" << " -f " << filename << " -s " << sequences_type << " -o " << output << " -l " << logfile;
+                ss << "g++ -w -std=c++17 -O3 ../main.cpp && ./a.out" << " -f " << filename << " -s " << sequences_type << " -o " << output << " -l " << logfile;
             else
                 ss << "g++ -w -std=c++17 -fopenmp -O3 main.cpp && ./a.out" << " -f " << filename << " -s " << sequences_type << " -o " << output << " -l " << logfile;
 

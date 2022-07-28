@@ -38,13 +38,25 @@ public:
         }
     }
 
-    std::unordered_map<int, std::unordered_map<int, double>> get_map_best_hits() { //&
-        return *this->map_hits; //this->map_best_hits
+    std::unordered_map<int, std::unordered_map<int, double>> get_map_best_hits()& {
+        return this->map_best_hits;
     }
 
     void print_map_best_hits() {
         for(auto &a : this->map_best_hits) {
-            if(a.first == 0)
+            for (auto &b: a.second)
+                *this->log_stream << a.first << " " << b.first << " " << b.second << std::endl;
+        }
+    }
+
+    /*** TEMP ***/
+    std::unordered_map<int, std::unordered_map<int, double>> get_map_hits() {
+        return *this->map_hits;
+    }
+
+    void print_map_hits() {
+        *this->log_stream << "print map hits" << std::endl;
+        for(auto &a : *this->map_hits) {
             for (auto &b: a.second)
                 *this->log_stream << a.first << " " << b.first << " " << b.second << std::endl;
         }
