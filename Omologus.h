@@ -13,12 +13,7 @@
 #include "include/kvalue.h"
 #include <omp.h>
 #include "include/global_options.h"
-
-template<size_t sz> struct bitset_comparer {
-    bool operator() (const std::bitset<sz> &b1, const std::bitset<sz> &b2) const {
-        return b1.to_ulong() < b2.to_ulong();
-    }
-};
+#include "lib/Helper.h"
 
 class Omologus {
 public:
@@ -42,7 +37,7 @@ public:
 
         for(auto &sequence_id : this->sequences_id) {
 
-            std::map<std::bitset<kvalue>, int, bitset_comparer<kvalue>> temp;
+            std::map<std::bitset<kvalue>, int, Helper::bitset_comparer<kvalue>> temp;
             std::bitset<kvalue> bitset_temp;
             bitset_temp.set(false);
             temp.insert(std::make_pair(bitset_temp, 0));
@@ -166,7 +161,7 @@ public:
         return this->sequences_id;
     }
 
-    std::unordered_map<int, std::map<std::bitset<kvalue>, int, bitset_comparer<kvalue>>>& get_sequences_kmers() {
+    std::unordered_map<int, std::map<std::bitset<kvalue>, int, Helper::bitset_comparer<kvalue>>>& get_sequences_kmers() {
         return this->sequences_kmers;
     }
 
@@ -183,7 +178,7 @@ private:
     int kmer_size;
     const int sequences_type; //0 amino acids, 1 nucleotides
     std::vector<int> sequences_id;
-    std::unordered_map<int, std::map<std::bitset<kvalue>, int, bitset_comparer<kvalue>>> sequences_kmers;   //map<sequence_id - map<kmer, contatore>>
+    std::unordered_map<int, std::map<std::bitset<kvalue>, int, Helper::bitset_comparer<kvalue>>> sequences_kmers;   //map<sequence_id - map<kmer, contatore>>
 
     const std::vector<std::string>* sequences_prefilter;
     const std::vector<std::pair<int, int>>* gene_pair;

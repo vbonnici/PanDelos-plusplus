@@ -11,7 +11,7 @@
 #include <unordered_map>
 #include <cstring>
 #include <iterator>
-
+#include "lib/Helper.h"
 
 /*
  * .faa file reader in standard format
@@ -30,7 +30,8 @@ public:
      *
      * @param[in] const char* filename
      */
-    explicit PangeneIData(const char* filename) {
+    explicit PangeneIData(const char* filename, std::ofstream* log_stream) {
+        this->log_stream = log_stream;
         this->open_file(filename);
 
         bool nameline = true;
@@ -87,35 +88,37 @@ public:
         this->genomes_names.reserve(genomeID.size());
         for (auto &it: genomeID)
             this->genomes_names.push_back(it.first);
+
+        *this->log_stream << "File di input letto correttamente" << std::endl;
     }
 
     /*
      * Kvalue that takes care of printing the vector containing the names of the genomes
      */
     void print_genomes_names() {
-        print_container<std::string, std::vector<std::string>::iterator>
-            (std::cout, this->genomes_names.begin(), this->genomes_names.end(), "\n");
+        Helper::simple_container_print<std::string, std::vector<std::string>::iterator>
+            (*this->log_stream, this->genomes_names.begin(), this->genomes_names.end(), "\n");
     }
 
     /*
      * Kvalue that takes care of printing the vector containing the sequences description
      */
     void print_sequences_description() {
-        print_container<std::string, std::vector<std::string>::iterator>
-                (std::cout, this->sequences_description.begin(), this->sequences_description.end(), "\n");
+        Helper::simple_container_print<std::string, std::vector<std::string>::iterator>
+                (*this->log_stream, this->sequences_description.begin(), this->sequences_description.end(), "\n");
     }
 
     /*
      * Kvalue that takes care of printing the vector containing the sequences
      */
     void print_sequences() {
-        print_container<std::string, std::vector<std::string>::iterator>
-                (std::cout, this->sequences.begin(), this->sequences.end(), "\n");
+        Helper::simple_container_print<std::string, std::vector<std::string>::iterator>
+                (*this->log_stream, this->sequences.begin(), this->sequences.end(), "\n");
     }
 
     void print_sequences_genome() {
-        print_container<int, std::vector<int>::iterator>
-                (std::cout, this->sequences_genome.begin(), this->sequences_genome.end(), "\n");
+        Helper::simple_container_print<int, std::vector<int>::iterator>
+                (*this->log_stream, this->sequences_genome.begin(), this->sequences_genome.end(), "\n");
     }
 
 
@@ -192,7 +195,7 @@ public:
                 throw std::runtime_error(std::strerror(errno));
 
         } catch(std::exception const& e) {
-            std::cout << "Exception: " << e.what() << "\n";
+            *this->log_stream << "Exception: " << e.what() << "\n";
             exit(11);
         }
     }
@@ -203,6 +206,7 @@ private:
     char* buffer{};
     long cursor{};
 
+    std::ofstream* log_stream;
     std::vector<std::string> sequences;
     std::vector<std::string> sequences_name;
     std::vector<std::vector<int>> genome_sequencesid;
@@ -247,11 +251,11 @@ private:
                 throw std::runtime_error("size fread != filesize");
 
         } catch(std::exception const& e) {
-            std::cout << "Exception: " << e.what() << "\n";
+            *this->log_stream << "Exception: " << e.what() << "\n";
             exit(11);
         }
 
-        //std::cout<<buffer<<"\n";
+        //*this->log_stream << buffer << "\n";
     }
 
     /*
@@ -286,23 +290,6 @@ private:
         ++this->cursor;
 
         return this->buffer + ci;
-    }
-
-    /*
-     * Template function that allows you to print on standard output a container identified by a pair of iterators
-     * (start and end).
-     *
-     * @tparam T type of data that the container stores
-     * @tparam InputIterator
-     *
-     * @param[in] std::ostream& ostr
-     * @param[in] InputIterator itbegin
-     * @param[in] InputIterator itend
-     * @param[in] const std::string& delimiter
-     */
-    template<typename T, typename InputIterator>
-    void print_container(std::ostream& ostr, InputIterator itbegin, InputIterator itend, const std::string& delimiter) {
-        std::copy(itbegin, itend, std::ostream_iterator<T>(ostr, delimiter.c_str()));
     }
 };
 

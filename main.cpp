@@ -29,7 +29,7 @@ int main(int argc, char* argv[]){
 
     /*** File parsing ***/
         gettimeofday(&tempo,nullptr); t1 = tempo.tv_sec+(tempo.tv_usec/1000000.0);
-    PangeneIData fire = PangeneIData(filename);
+    PangeneIData fire = PangeneIData(filename, &log_stream);
     fire.close();
 
     auto sequences = fire.get_sequences();
@@ -57,7 +57,7 @@ int main(int argc, char* argv[]){
     /*** BestHits ***/
     BestHits bh = BestHits(map_hits, &log_stream);
     bh.compute_best_hits();
-    //bh.print_map_hits();
+    //Helper::nested_unordered_map_print<int, int, double>(output_stream, map_hits, " ");
     auto map_best_hits = bh.get_map_best_hits();
 
     /*** BidirectionalBestHits ***/
@@ -74,15 +74,14 @@ int main(int argc, char* argv[]){
     /*** Output ***/
     output_stream << "Ortologhi " << std::endl;
 
-    for(auto &i : vector_tuple_bbh) {
-        output_stream << std::get<0>(i) << '\t' << std::get<1>(i) << '\t' << std::get<2>(i) << std::endl;
-    }
+    for(auto &i : vector_tuple_bbh)
+        Helper::simple_triple_print<int, int, double>(output_stream, i, "\t");
 
     output_stream << "Paraloghi: " << std::endl;
 
-    for(auto &i : paralog_best_hits) {
-        output_stream << std::get<0>(i) << '\t' << std::get<1>(i) << '\t' << std::get<2>(i) << std::endl;
-    }
+    for(auto &i : paralog_best_hits)
+        Helper::simple_triple_print<int, int, double>(output_stream, i, "\t");
+
 
     output_stream.close();
 

@@ -13,42 +13,7 @@
 #include "include/kvalue.h"
 #include <omp.h>
 #include "include/global_options.h"
-
-
-template <typename KeyType, typename LeftValue, typename RightValue>
-std::map<KeyType, std::pair<LeftValue, RightValue>>
-UnionMaps(const std::map<KeyType, LeftValue>& map1, const std::map<KeyType, RightValue>& map2) {
-
-    std::map<KeyType, std::pair<LeftValue, RightValue>> result;
-    auto it_map1  = map1.begin();
-    auto it_map2 = map2.begin();
-
-    while (it_map1 != map1.end() && it_map2 != map2.end()) {
-        if (it_map1->first < it_map2->first) {
-            result.insert(std::make_pair(it_map1->first, std::make_pair(it_map1->second, 0)));
-            it_map1++;
-        } else if (it_map1->first == it_map2->first) {
-            result.insert(std::make_pair(it_map1->first, std::make_pair(it_map1->second, it_map2->second)));
-            it_map1++;
-            it_map2++;
-        } else if (it_map1->first > it_map2->first) {
-            result.insert(std::make_pair(it_map2->first, std::make_pair(0, it_map2->second)));
-            it_map2++;
-        }
-    }
-
-    while (it_map1 != map1.end()) {
-        result.insert(std::make_pair(it_map1->first, std::make_pair(it_map1->second, 0)));
-        it_map1++;
-    }
-
-    while (it_map2 != map2.end()) {
-        result.insert(std::make_pair(it_map2->first, std::make_pair(0, it_map2->second)));
-        it_map2++;
-    }
-
-    return result;
-}
+#include "lib/Helper.h"
 
 class Omologusv2 {
 public:
@@ -72,7 +37,7 @@ public:
 
         for(auto &sequence_id : this->sequences_id) {
 
-            std::map<std::bitset<kvalue>, int, bitset_comparer<kvalue>> temp;
+            std::map<std::bitset<kvalue>, int, Helper::bitset_comparer<kvalue>> temp;
             std::bitset<kvalue> bitset_temp;
             bitset_temp.set(false);
             temp.insert(std::make_pair(bitset_temp, 0));
@@ -92,7 +57,7 @@ public:
                 else {
                     std::string aminoacid = sequence.substr(window, this->kmer_size);
 
-                    kmer = Omologusv2::aminoacid_to_nucleotides(aminoacid);
+                    kmer = Helper::aminoacid_to_nucleotides(aminoacid);
                 }
 
                 if(kmer_is_valid(kmer)) {
@@ -152,7 +117,7 @@ public:
             for(auto &kmerbit : kmerbit_map_b)
                 kmerstring_map_b.insert(std::make_pair(kmerbit.first.to_string(), kmerbit.second));
 
-            auto kmerstring_map_a_b = UnionMaps<std::string, int, int>(kmerstring_map_a, kmerstring_map_b);
+            auto kmerstring_map_a_b = Helper::UnionMaps<std::string, int, int>(kmerstring_map_a, kmerstring_map_b);
 
             for(auto &kmer : kmerstring_map_a_b) {
 
@@ -196,7 +161,7 @@ public:
         return this->sequences_id;
     }
 
-    std::unordered_map<int, std::map<std::bitset<kvalue>, int, bitset_comparer<kvalue>>>& get_sequences_kmers() {
+    std::unordered_map<int, std::map<std::bitset<kvalue>, int, Helper::bitset_comparer<kvalue>>>& get_sequences_kmers() {
         return this->sequences_kmers;
     }
 
@@ -213,7 +178,7 @@ private:
     int kmer_size;
     const int sequences_type; //0 amino acids, 1 nucleotides
     std::vector<int> sequences_id;
-    std::unordered_map<int, std::map<std::bitset<kvalue>, int, bitset_comparer<kvalue>>> sequences_kmers;   //map<sequence_id - map<kmer, contatore>>
+    std::unordered_map<int, std::map<std::bitset<kvalue>, int, Helper::bitset_comparer<kvalue>>> sequences_kmers;   //map<sequence_id - map<kmer, contatore>>
 
     const std::vector<std::string>* sequences_prefilter;
     const std::vector<std::pair<int, int>>* gene_pair;
@@ -266,78 +231,6 @@ private:
 
         this->sequences_id.reserve(temp_sequences.size());
         this->sequences_id.assign(temp_sequences.begin(), temp_sequences.end());
-    }
-
-    static std::string aminoacid_to_nucleotides(std::basic_string<char> aminoacid) {
-        std::string kmer;
-
-        for(int a = 0; a < aminoacid.length(); ++a) {
-
-            if(reinterpret_cast<char>(aminoacid[a]) == 'F')
-                kmer += "TTT";
-
-            else if(reinterpret_cast<char>(aminoacid[a]) == 'L')
-                kmer += "TTA";
-
-            else if(reinterpret_cast<char>(aminoacid[a]) == 'I')
-                kmer += "ATT";
-
-            else if (reinterpret_cast<char>(aminoacid[a]) == 'M')
-                kmer += "ATG";
-
-            else if (reinterpret_cast<char>(aminoacid[a]) == 'V')
-                kmer += "GTT";
-
-            else if (reinterpret_cast<char>(aminoacid[a]) == 'S')
-                kmer += "TCT";
-
-            else if (reinterpret_cast<char>(aminoacid[a]) == 'P')
-                kmer += "CCT";
-
-            else if (reinterpret_cast<char>(aminoacid[a]) == 'T')
-                kmer += "ACT";
-
-            else if (reinterpret_cast<char>(aminoacid[a]) == 'A')
-                kmer += "GCT";
-
-            else if (reinterpret_cast<char>(aminoacid[a]) == 'Y')
-                kmer += "TAT";
-
-            else if (reinterpret_cast<char>(aminoacid[a]) == '*')
-                kmer += "TAA";
-
-            else if (reinterpret_cast<char>(aminoacid[a]) == 'H')
-                kmer += "CAT";
-
-            else if (reinterpret_cast<char>(aminoacid[a]) == 'Q')
-                kmer += "CAA";
-
-            else if (reinterpret_cast<char>(aminoacid[a]) == 'N')
-                kmer += "AAT";
-
-            else if (reinterpret_cast<char>(aminoacid[a]) == 'K')
-                kmer += "AAA";
-
-            else if (reinterpret_cast<char>(aminoacid[a]) == 'D')
-                kmer += "GAT";
-
-            else if (reinterpret_cast<char>(aminoacid[a]) == 'E')
-                kmer += "GAA";
-
-            else if (reinterpret_cast<char>(aminoacid[a]) == 'C')
-                kmer += "TGT";
-
-            else if (reinterpret_cast<char>(aminoacid[a]) == 'W')
-                kmer += "TGG";
-
-            else if (reinterpret_cast<char>(aminoacid[a]) == 'R')
-                kmer += "CGT";
-
-            else if (reinterpret_cast<char>(aminoacid[a]) == 'G')
-                kmer += "GGG";
-        }
-
-        return kmer;
     }
 };
 #endif //PANDELOS_PLUSPLUS_OMOLOGUSv2_H

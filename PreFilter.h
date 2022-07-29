@@ -15,6 +15,7 @@
 #include <cassert>
 #include <typeinfo>
 #include "include/global_options.h"
+#include "lib/Helper.h"
 
 struct timeval tempo{};
 double t1, t2, sum;
@@ -277,85 +278,13 @@ private:
             for(int window = 0; window < sequence.length() - this->kmer_size + 1; window++) {
                 std::string aminoacid = sequence.substr(window, 2);
 
-                std::string kmer = PreFilter::aminoacid_to_nucleotides(aminoacid);
+                std::string kmer = Helper::aminoacid_to_nucleotides(aminoacid);
 
                 int kmer_in_int = PreFilter::kmer_to_int(kmer);
 
                 this->sequences_kmers.operator[](k).operator[](kmer_in_int) += 1;
             }
         }
-    }
-
-    static std::string aminoacid_to_nucleotides(std::string& aminoacid) {
-        std::string kmer;
-
-        for(int a = 0; a < aminoacid.length(); ++a) {
-
-            if(reinterpret_cast<char>(aminoacid[a]) == 'F')
-                kmer += "TTT";
-
-            else if(reinterpret_cast<char>(aminoacid[a]) == 'L')
-                kmer += "TTA";
-
-            else if(reinterpret_cast<char>(aminoacid[a]) == 'I')
-                kmer += "ATT";
-
-            else if (reinterpret_cast<char>(aminoacid[a]) == 'M')
-                kmer += "ATG";
-
-            else if (reinterpret_cast<char>(aminoacid[a]) == 'V')
-                kmer += "GTT";
-
-            else if (reinterpret_cast<char>(aminoacid[a]) == 'S')
-                kmer += "TCT";
-
-            else if (reinterpret_cast<char>(aminoacid[a]) == 'P')
-                kmer += "CCT";
-
-            else if (reinterpret_cast<char>(aminoacid[a]) == 'T')
-                kmer += "ACT";
-
-            else if (reinterpret_cast<char>(aminoacid[a]) == 'A')
-                kmer += "GCT";
-
-            else if (reinterpret_cast<char>(aminoacid[a]) == 'Y')
-                kmer += "TAT";
-
-            else if (reinterpret_cast<char>(aminoacid[a]) == '*')
-                kmer += "TAA";
-
-            else if (reinterpret_cast<char>(aminoacid[a]) == 'H')
-                kmer += "CAT";
-
-            else if (reinterpret_cast<char>(aminoacid[a]) == 'Q')
-                kmer += "CAA";
-
-            else if (reinterpret_cast<char>(aminoacid[a]) == 'N')
-                kmer += "AAT";
-
-            else if (reinterpret_cast<char>(aminoacid[a]) == 'K')
-                kmer += "AAA";
-
-            else if (reinterpret_cast<char>(aminoacid[a]) == 'D')
-                kmer += "GAT";
-
-            else if (reinterpret_cast<char>(aminoacid[a]) == 'E')
-                kmer += "GAA";
-
-            else if (reinterpret_cast<char>(aminoacid[a]) == 'C')
-                kmer += "TGT";
-
-            else if (reinterpret_cast<char>(aminoacid[a]) == 'W')
-                kmer += "TGG";
-
-            else if (reinterpret_cast<char>(aminoacid[a]) == 'R')
-                kmer += "CGT";
-
-            else if (reinterpret_cast<char>(aminoacid[a]) == 'G')
-                kmer += "GGG";
-        }
-
-        return kmer;
     }
 };
 #endif //PANDELOS_PLUSPLUS_PREFILTER_H
