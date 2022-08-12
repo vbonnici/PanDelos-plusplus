@@ -8,10 +8,9 @@
 #include <sstream>
 #include <cmath>
 #include <unordered_set>
-#include "../include/kvalue.h"
+#include "../conf/conf.h"
 #include <stdlib.h>
 #include <filesystem>
-#include "../include/global_options.h"
 
 class Kvalue {
 public:
@@ -73,28 +72,21 @@ private:
         if(kvalue != kvalue_size_expected) {
             std::ofstream ofs;
 
-            if(debug)
-                ofs = std::ofstream("../include/kvalue.h", std::ofstream::trunc);
-            else {
-                std::filesystem::path cwd = std::filesystem::current_path() / "include/kvalue.h";
-                ofs = std::ofstream(cwd.string(), std::ofstream::trunc);
-            }
+            std::filesystem::path cwd = std::filesystem::current_path() / "conf/conf.h";
+            ofs = std::ofstream(cwd.string(), std::ofstream::trunc);
 
             if (!ofs) {
                 *this->log_stream << "errore apertura file" << std::endl;
                 exit(11);
             }
 
-            ofs << "#define kvalue " << kvalue_size_expected;
+            ofs << "#define kvalue " << kvalue_size_expected << std::endl;
             ofs.close();
 
 
             std::stringstream ss;
 
-            if(debug)
-                ss << "g++ -w -std=c++17 -O3 ../main.cpp && ./a.out" << " -f " << filename << " -s " << sequences_type << " -o " << output << " -l " << logfile;
-            else
-                ss << "g++ -w -std=c++17 -fopenmp -O3 main.cpp && ./a.out" << " -f " << filename << " -s " << sequences_type << " -o " << output << " -l " << logfile;
+            ss << "g++ -w -std=c++17 -fopenmp -O3 src/cpp/main.cpp -o bin/pandelos.out && bin/pandelos_plus_plus.out" << " -f " << filename << " -s " << sequences_type << " -o " << output << " -l " << logfile;
 
             std::string command = ss.str();
 

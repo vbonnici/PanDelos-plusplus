@@ -8,8 +8,7 @@
 #include <unordered_map>
 #include <cmath>
 #include <unordered_set>
-#include "include/kvalue.h"
-#include "include/global_options.h"
+#include "../../conf/conf.h"
 #include "Omologus.h"
 #include "PreFilter.h"
 

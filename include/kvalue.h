@@ -1,1 +1,0 @@
-#define kvalue 12

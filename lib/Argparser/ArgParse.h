@@ -2,7 +2,7 @@
 #define PANDELOS_PLUSPLUS_ARGPARSE_H
 #include <iostream>
 #include <string>
-#include "argagg/argagg.hpp"
+#include "argagg.hpp"
 
 using argagg::parser_results;
 using argagg::parser;

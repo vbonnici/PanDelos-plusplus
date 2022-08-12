@@ -5,8 +5,7 @@
 #include <string>
 #include <unordered_map>
 #include <algorithm>
-#include "include/kvalue.h"
-#include "include/global_options.h"
+#include "../../conf/conf.h"
 
 class BestHits {
 public:

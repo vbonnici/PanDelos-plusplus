@@ -62,35 +62,35 @@
  * dash ('-') or double-dash ('--').
  *
  * A "parser" is a set of "definitions" (not a literal std::set but rather a
- * std::vector). A parser is represented by the argagg::parser struct.
+ * std::vector). A parser is represented by the Argparser::parser struct.
  *
  * A "definition" is a structure with four components that define what
  * "options" are recognized. The four components are the name of the option,
  * the strings that represent the option, the option's help text, and how many
  * arguments the option should expect. "Flags" are the individual strings that
  * represent the option ("-v" and "--verbose" are flags for the "verbose"
- * option). A definition is represented by the argagg::definition struct.
+ * option). A definition is represented by the Argparser::definition struct.
  *
  * Note at this point that the word "option" can be used interchangeably to
  * mean the notion of an option and the actual instance of an option given a
  * set of command line arguments. To be unambiguous we use a "definition" to
  * represent the notion of an option and an "option result" to represent an
  * actual option parsed from a set of command line arguments. An "option
- * result" is represented by the argagg::option_result struct.
+ * result" is represented by the Argparser::option_result struct.
  *
  * There's one more wrinkle to this: an option can show up multiple times in a
  * given set of command line arguments. For example, "-n 1 -n 2 -n 3". This
- * will parse into three distinct argagg::option_result instances, but all of
- * them correspond to the same argagg::definition. We aggregate these into the
- * argagg::option_results struct which represents "all parser results for a
- * given option definition". This argagg::option_results is basically a
- * std::vector of argagg::option_result.
+ * will parse into three distinct Argparser::option_result instances, but all of
+ * them correspond to the same Argparser::definition. We aggregate these into the
+ * Argparser::option_results struct which represents "all parser results for a
+ * given option definition". This Argparser::option_results is basically a
+ * std::vector of Argparser::option_result.
  *
  * Options aren't the only thing parsed though. Positional arguments are also
  * parsed. Thus a parser produces a result that contains both option results
  * and positional arguments. The parser results are represented by the
- * argagg::parser_results struct. All option results are stored in a mapping
- * from option name to the argagg::option_results. All positional arguments are
+ * Argparser::parser_results struct. All option results are stored in a mapping
+ * from option name to the Argparser::option_results. All positional arguments are
  * simply stored in a vector of C-strings.
  */
 namespace argagg {
@@ -147,7 +147,7 @@ namespace argagg {
 /**
  * @brief
  * This exception is thrown when an unknown option is requested by name from an
- * argagg::parser_results through the indexing operator ([]).
+ * Argparser::parser_results through the indexing operator ([]).
  */
     struct unknown_option
             : public std::runtime_error {
@@ -174,13 +174,13 @@ namespace argagg {
         /**
          * @brief
          * For simple types the main extension point for adding argument conversions
-         * is argagg::convert::arg<T>(). However, for complex types such as templated
+         * is Argparser::convert::arg<T>(). However, for complex types such as templated
          * types partial specialization of a helper struct is required. This struct
          * provides that extension point. The default, generic implementation of
-         * argagg::convert::arg<T>() calls converter<T>::convert().
+         * Argparser::convert::arg<T>() calls converter<T>::convert().
          *
          * @see
-         * @ref argagg::csv
+         * @ref Argparser::csv
          */
         template <typename T>
         struct converter {
@@ -195,13 +195,13 @@ namespace argagg {
          * to where the parsed argument will go, and optionally the delimiting
          * character. The argument string will be read up to the next delimiting
          * character and then converted using
-         * <tt>argagg::convert::arg<decltype(out_arg)>()</tt>. The pointer is then
+         * <tt>Argparser::convert::arg<decltype(out_arg)>()</tt>. The pointer is then
          * incremented accordingly. If the delimiting character is no longer found
          * then false is returned meaning that parsing the list can be considered
          * finished.
          *
          * @code
-           #include <argagg/argagg.hpp>
+           #include <Argparser/Argparser.hpp>
 
            struct position3 {
              double x;
@@ -209,7 +209,7 @@ namespace argagg {
              double z;
            };
 
-           namespace argagg {
+           namespace Argparser {
            namespace convert {
              template <>
              position3 arg(const char* s)
@@ -229,16 +229,16 @@ namespace argagg {
                return result;
              }
            } // namespace convert
-           } // namespace argagg
+           } // namespace Argparser
 
            int main(int argc, char** argv)
            {
-             argagg::parser argparser {{
+             Argparser::parser argparser {{
                 { "origin", {"-o", "--origin"},
                   "origin as position3 specified as a comma separated list of "
                   "components (e.g. '1,2,3')", 1},
               }};
-             argagg::parser_results args = argparser.parse(argc, argv);
+             Argparser::parser_results args = argparser.parse(argc, argv);
              auto my_position = args["origin"].as<position3>();
              // ...
              return 0;
@@ -274,8 +274,8 @@ namespace argagg {
          * @brief
          * Converts the argument parsed for this single option instance into the
          * given type using the type matched conversion function
-         * argagg::convert::arg(). If there was not an argument parsed for this
-         * single option instance then a argagg::option_lacks_argument_error
+         * Argparser::convert::arg(). If there was not an argument parsed for this
+         * single option instance then a Argparser::option_lacks_argument_error
          * exception is thrown. The specific conversion function may throw other
          * exceptions.
          */
@@ -286,7 +286,7 @@ namespace argagg {
          * @brief
          * Converts the argument parsed for this single option instance into the
          * given type using the type matched conversion function
-         * argagg::convert::arg(). If there was not an argument parsed for this
+         * Argparser::convert::arg(). If there was not an argument parsed for this
          * single option instance then the provided default value is returned
          * instead. If the conversion function throws an exception then it is ignored
          * and the default value is returned.
@@ -296,9 +296,9 @@ namespace argagg {
 
         /**
          * @brief
-         * Since we have the argagg::option_result::as() API we might as well alias
+         * Since we have the Argparser::option_result::as() API we might as well alias
          * it as an implicit conversion operator. This performs implicit conversion
-         * using the argagg::option_result::as() method.
+         * using the Argparser::option_result::as() method.
          *
          * @note
          * An implicit boolean conversion specialization exists which returns false
@@ -669,13 +669,13 @@ namespace argagg {
  * @brief
  * A convenience output stream that will accumulate what is streamed to it and
  * then, on destruction, format the accumulated string (via the
- * argagg::fmt_string() function) to the provided std::ostream.
+ * Argparser::fmt_string() function) to the provided std::ostream.
  *
  * Example use:
  *
  * @code
  * {
- *   argagg::fmt_ostream f(std::cerr);
+ *   Argparser::fmt_ostream f(std::cerr);
  *   f << "Usage: " << really_long_string << '\n';
  * } // on destruction here the formatted string will be streamed to std::cerr
  * @endcode
@@ -699,7 +699,7 @@ namespace argagg {
         /**
          * @brief
          * Special destructor that will format the accumulated string using fmt (via
-         * the argagg::fmt_string() function) and stream it to the std::ostream
+         * the Argparser::fmt_string() function) and stream it to the std::ostream
          * stored.
          */
         ~fmt_ostream();
@@ -716,7 +716,7 @@ namespace argagg {
     std::string fmt_string(const std::string& s);
 
 
-} // namespace argagg
+} // namespace Argparser
 
 
 /**
@@ -1684,7 +1684,7 @@ namespace argagg {
     }
 
 
-} // namespace argagg
+} // namespace Argparser
 
 
 inline

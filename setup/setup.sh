@@ -1,36 +1,61 @@
 #!/bin/bash
 
-g++ -w -std=c++17 -fopenmp -O3 ../src/cpp/main.cpp -o pandelos_plus_plus.out
+g++ -w -std=c++17 -fopenmp -O3 src/cpp/main.cpp -o bin/pandelos_plus_plus.out
 
-[ ! -d "../../pandelos_data" ] && mkdir ../../pandelos_data
+echo "Finished build"
 
-[ ! -d "../../pandelos_output" ] && mkdir ../../pandelos_output
+while true; do
+    read -p "Do you want to download the sample files from the internet? " yn
+    case $yn in
+        [Yy]* ) break;;
+        [Nn]* ) exit;;
+        * ) echo "Please answer yes or no.";;
+    esac
+done
 
-cd ../../pandelos_data
+[ ! -d "../pandelos_data" ] && mkdir ../pandelos_data
 
-mkdir mycoplasma_panprova && cd mycoplasma_panprova
+[ ! -d "../pandelos_output" ] && mkdir ../pandelos_output
 
-wget https://pangenes.s3.eu-south-1.amazonaws.com/mycoplasma_panprova/mycoplasma_panprova_16.zip
+mkdir ../pandelos_data/mycoplasma_panprova
+
+wget https://pangenes.s3.eu-south-1.amazonaws.com/mycoplasma_panprova/mycoplasma_panprova_16.zip -O ../pandelos_data/mycoplasma_panprova/mycoplasma_panprova_16.zip
 
 #wget http://localhost:8888/mycoplasma_panprova_16.zip
 
-unzip mycoplasma_panprova_16.zip && rm mycoplasma_panprova_16.zip
+unzip ../pandelos_data/mycoplasma_panprova/mycoplasma_panprova_16.zip -d ../pandelos_data/mycoplasma_panprova/ && rm ../pandelos_data/mycoplasma_panprova/mycoplasma_panprova_16.zip
 
-cd ..
+mkdir ../pandelos_data/escherichia_panprova
 
-mkdir escherichia_panprova && cd escherichia_panprova
+wget -O ../pandelos_data/escherichia_panprova/escherichia_panprova_16.zip https://pangenes.s3.eu-south-1.amazonaws.com/escherichia_panprova/escherichia_panprova_16.zip
 
-wget https://pangenes.s3.eu-south-1.amazonaws.com/escherichia_panprova/escherichia_panprova_16.zip
+unzip ../pandelos_data/escherichia_panprova/escherichia_panprova_16.zip -d ../pandelos_data/escherichia_panprova/ && rm ../pandelos_data/escherichia_panprova/escherichia_panprova_16.zip
 
-unzip escherichia_panprova_16.zip && rm escherichia_panprova_16.zip
-
-cd ..
-
-mkdir example1 && mkdir example2 && mkdir example3 && mkdir example4
+mkdir ../pandelos_data/example1 && mkdir ../pandelos_data/example2 && mkdir ../pandelos_data/example3 && mkdir ../pandelos_data/example4
 
 cd ..
 
 current_path=$(pwd)
+
+#
+# It deletes unnecessary files and transforms PANPROVA's output into .gbk files that you will need later
+# 
+echo "PANPROVA to gbk"
+
+bash PanDelos-plusplus/script/panprova2gbk.sh $current_path'/pandelos_data/mycoplasma_panprova'
+
+bash PanDelos-plusplus/script/panprova2gbk.sh $current_path'/pandelos_data/escherichia_panprova'
+
+#
+# Transform .gbk files into .faa files composed of amino acid sequences
+# $1 = absolute path where the .gbk files are present
+# $2 = absolute path and prefix of the .faa file to generate
+#
+echo "Transform .gbk files into .faa files"
+
+bash PanDelos-plusplus/script/gbk2faa.sh $current_path'/pandelos_data/mycoplasma_panprova/' $current_path'/pandelos_data/example3/mycoplasma_panprova_'
+
+bash PanDelos-plusplus/script/gbk2faa.sh $current_path'/pandelos_data/escherichia_panprova/' $current_path'/pandelos_data/example4/escherichia_panprova_'
 
 #
 # Transform the output of PANPROVA into a faa file consisting of nucleotide sequences
@@ -38,25 +63,13 @@ current_path=$(pwd)
 # $2 = common prefix of all genomes
 # $3 = path and common prefix of all .faa files to be generated
 #
-
-bash pandelos-plus-plus/script/panprova2nucleotides.sh $current_path'/pandelos_data/mycoplasma_panprova/' 'genome_' $current_path'/pandelos_data/example1/mycoplasma_'
-
-bash pandelos-plus-plus/script/panprova2nucleotides.sh $current_path'/pandelos_data/escherichia_panprova/' 'genome_' $current_path'/pandelos_data/example2/escherichia_'
-
-#
-# It deletes unnecessary files and transforms PANPROVA's output into .gbk files that you will need later
-# 
-
-bash pandelos-plus-plus/script/panprova2gbk.sh $current_path'/pandelos_data/mycoplasma_panprova'
-
-bash pandelos-plus-plus/script/panprova2gbk.sh $current_path'/pandelos_data/escherichia_panprova'
-
-#
-# Transform .gbk files into .faa files composed of amino acid sequences
-# $1 = absolute path where the .gbk files are present
-# $2 = absolute path and prefix of the .faa file to generate
-#
-
-bash pandelos-plus-plus/script/gbk2faa.sh $current_path'/pandelos_data/mycoplasma_panprova/' $current_path'/pandelos_data/example3/mycoplasma_panprova_'
-
-bash pandelos-plus-plus/script/gbk2faa.sh $current_path'/pandelos_data/escherichia_panprova/' $current_path'/pandelos_data/example4/escherichia_panprova_'
+while true; do
+    read -p "Do you want to generate faa files with corresponding nucleotides? It may take several minutes" yn
+    case $yn in
+        [Yy]* ) bash PanDelos-plusplus/script/panprova2nucleotides.sh $current_path'/pandelos_data/mycoplasma_panprova/' 'genome_' $current_path'/pandelos_data/example1/mycoplasma_';
+                bash PanDelos-plusplus/script/panprova2nucleotides.sh $current_path'/pandelos_data/escherichia_panprova/' 'genome_' $current_path'/pandelos_data/example2/escherichia_';
+                break;;
+        [Nn]* ) break;;
+        * ) echo "Please answer yes or no.";;
+    esac
+done

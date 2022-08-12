@@ -9,6 +9,6 @@ do
     a=$(($i -1))
     for j in $(seq 0 $a)
 	do
-	  	python3 pandelos-plus-plus/script/panprova2nucleotides.py $absolute_path_in$prefix$j'.fna' $absolute_path_in$prefix$j'.gff' $output_file$i'.faa'
+	  	python3 PanDelos-plusplus/script/panprova2nucleotides.py $absolute_path_in$prefix$j'.fna' $absolute_path_in$prefix$j'.gff' $output_file$i'.faa'
 	done
 done

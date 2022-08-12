@@ -7,8 +7,7 @@
 #include <unordered_map>
 #include <unordered_set>
 #include <algorithm>
-#include "include/kvalue.h"
-#include "include/global_options.h"
+#include "../../conf/conf.h"
 
 class BidirectionalBestHits {
 public:

@@ -1,14 +1,14 @@
 #include <iostream>
 #include <string>
-#include "PangeneIData.h"
-#include "Omologus.h"
-#include "BestHits.h"
-#include "BidirectionalBestHits.h"
-#include "PreFilter.h"
-#include "Paralog.h"
+#include "../../include/PangeneIData.h"
+#include "../../lib/PanDelos/Omologus.h"
+#include "../../lib/PanDelos/BestHits.h"
+#include "../../lib/PanDelos/BidirectionalBestHits.h"
+#include "../../lib/PanDelos/PreFilter.h"
+#include "../../lib/PanDelos/Paralog.h"
 #include <sys/time.h>
-#include "lib/Kvalue.h"
-#include "lib/ArgParse.h"
+#include "../../include/Kvalue.h"
+#include "../../lib/Argparser/ArgParse.h"
 
 int main(int argc, char* argv[]){
     struct timeval tempo{};

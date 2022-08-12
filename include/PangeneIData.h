@@ -11,7 +11,7 @@
 #include <unordered_map>
 #include <cstring>
 #include <iterator>
-#include "lib/Helper.h"
+#include "Helper.h"
 
 /*
  * .faa file reader in standard format

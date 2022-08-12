@@ -10,10 +10,9 @@
 #include <cmath>
 #include <unordered_set>
 #include <algorithm>
-#include "include/kvalue.h"
+#include "../../conf/conf.h"
 #include <omp.h>
-#include "include/global_options.h"
-#include "lib/Helper.h"
+#include "../../include/Helper.h"
 
 class Omologus {
 public:
@@ -88,8 +87,7 @@ public:
             this->map_hits.insert(std::make_pair(i.second, std::unordered_map<int, double>()));
         }
 
-        if(!debug)
-            omp_set_num_threads(omp_get_num_procs());
+        omp_set_num_threads(omp_get_num_procs());
 
         #pragma omp parallel for private(jaccard_similarity, counter_min, counter_max, value_a, value_b, id_gene_a, id_gene_b)
         for (auto &i: *this->gene_pair) {

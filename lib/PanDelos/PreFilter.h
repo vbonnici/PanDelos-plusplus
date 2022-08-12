@@ -14,8 +14,8 @@
 #include <sys/time.h>
 #include <cassert>
 #include <typeinfo>
-#include "include/global_options.h"
-#include "lib/Helper.h"
+#include "../../conf/conf.h"
+#include "../../include/Helper.h"
 
 struct timeval tempo{};
 double t1, t2, sum;
@@ -64,8 +64,7 @@ public:
         std::string sequence_a;
         std::string sequence_b;
 
-        if(!debug)
-            omp_set_num_threads(omp_get_num_procs());
+        omp_set_num_threads(omp_get_num_procs());
 
         #pragma omp parallel
         {
@@ -126,8 +125,7 @@ public:
         std::string sequence_b;
         int index, i;
 
-        if(!debug)
-            omp_set_num_threads(omp_get_num_procs());
+        omp_set_num_threads(omp_get_num_procs());
 
         for(index = 0; index < this->genome_sequencesid->size(); index++) {
 
