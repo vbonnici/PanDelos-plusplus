@@ -36,8 +36,6 @@ public:
 
         bool nameline = true;
         std::string genome_name, sequence_name, sequence_description;
-        std::map<std::string, int> genomeID;
-        int genomeid;
         std::string genome_name_old;
         std::vector<int> temp_vector;
         int counter_sequence = 0;
@@ -52,6 +50,7 @@ public:
                 std::string sequence = this->next_string();
                 this->sequences.emplace_back(sequence);
                 this->sequences_name.emplace_back(sequence_name);
+                this->sequences_description.push_back(sequence_description);
 
                 if(genome_name != genome_name_old) {
                     if(new_genome) {
@@ -63,21 +62,9 @@ public:
                     genome_name_old = genome_name;
                     new_genome = true;
                 } else {
-                        temp_vector.emplace_back(counter_sequence);
+                    temp_vector.emplace_back(counter_sequence);
                 }
                 ++counter_sequence;
-
-                auto genomeid_iterator = genomeID.find(genome_name);
-
-                if (genomeid_iterator == genomeID.end()) {
-                    genomeid = genomeID.size();
-                    genomeID.insert(std::pair<std::string, int>(genome_name, genomeid));
-                }
-                else
-                    genomeid = genomeid_iterator->second;
-
-                this->sequences_genome.push_back(genomeid);
-                this->sequences_description.push_back(sequence_description);
             }
 
             nameline = !nameline;
@@ -85,9 +72,16 @@ public:
 
         this->genome_sequencesid.emplace_back(temp_vector);
 
-        this->genomes_names.reserve(genomeID.size());
-        for (auto &it: genomeID)
-            this->genomes_names.push_back(it.first);
+        this->genes_id_interval.reserve(this->genome_sequencesid.size());
+
+        for(int i = 0; i < this->genome_sequencesid.size(); ++i) {
+            auto genes = this->genome_sequencesid.operator[](i);
+
+            auto min = min_element(std::begin(genes), std::end(genes));
+            auto max = max_element(std::begin(genes), std::end(genes));
+
+            this->genes_id_interval.emplace_back(std::make_pair(*min, *max));
+        }
 
         *this->log_stream << "File di input letto correttamente" << std::endl;
     }
@@ -114,16 +108,6 @@ public:
     void print_sequences() {
         Helper::simple_container_print<std::string, std::vector<std::string>::iterator>
                 (*this->log_stream, this->sequences.begin(), this->sequences.end(), "\n");
-    }
-
-    void print_sequences_genome() {
-        Helper::simple_container_print<int, std::vector<int>::iterator>
-                (*this->log_stream, this->sequences_genome.begin(), this->sequences_genome.end(), "\n");
-    }
-
-
-    std::vector<int>& get_sequences_genome() {
-        return this->sequences_genome;
     }
 
     /*
@@ -166,12 +150,8 @@ public:
         return this->genome_sequencesid;
     }
 
-    /*std::unordered_map<std::string, unsigned int>& get_sequences_name_id() {
-        return this->sequences_name_id;
-    }*/
-
-    std::unordered_map<std::string, std::unordered_map<std::string, unsigned int>>& get_map_sequences_attributes() {
-        return this->map_sequences_attributes;
+    std::vector<std::pair<int, int>>& get_genes_id_interval() {
+        return this->genes_id_interval;
     }
 
     /*
@@ -210,10 +190,9 @@ private:
     std::vector<std::string> sequences;
     std::vector<std::string> sequences_name;
     std::vector<std::vector<int>> genome_sequencesid;
-    std::unordered_map<std::string, std::unordered_map<std::string, unsigned int>> map_sequences_attributes;
     std::vector<std::string> sequences_description;
-    std::vector<int> sequences_genome;
-    std::vector<std::string> genomes_names; //TODO: forse non serve
+    std::vector<std::string> genomes_names;
+    std::vector<std::pair<int, int>> genes_id_interval;
 
     /*
      * This method takes care of opening the file, allocating the buffer and storing all the contents of the file in it

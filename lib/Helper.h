@@ -1,6 +1,16 @@
 #ifndef PANDELOS_PLUSPLUS_HELPER_H
 #define PANDELOS_PLUSPLUS_HELPER_H
 
+#include <iostream>
+#include <string>
+#include <vector>
+#include <map>
+#include <bitset>
+#include <unordered_map>
+#include <cmath>
+#include <unordered_set>
+#include <algorithm>
+
 namespace Helper {
 
     template <typename KeyType, typename LeftValue, typename RightValue>
@@ -68,11 +78,11 @@ namespace Helper {
     }
 
     template<typename map_key, typename nested_map_key, typename nested_map_value>
-    void nested_unordered_map_print(std::ostream& ostr, const std::unordered_map<map_key, std::unordered_map<nested_map_key, nested_map_value>>& _map, const std::string& delimiter) {
+    void genes_map_print(std::ostream& ostr, const std::unordered_map<map_key, std::unordered_map<nested_map_key, nested_map_value>>& _map, const std::string& delimiter) {
         for (const auto& item : _map) {
             ostr << item.first << delimiter.c_str();
 
-            simple_unordered_map_print<std::string, int>(ostr, item.second, delimiter);
+            simple_unordered_map_print<int, double>(ostr, item.second, delimiter);
         }
     }
 
@@ -83,6 +93,11 @@ namespace Helper {
             ostr << item.first << delimiter.c_str() << pair.first << delimiter.c_str() << pair.second << std::endl;
 
         }
+    }
+
+    template<typename type1, typename type2>
+    void simple_pair_print(std::ostream& ostr, const std::pair<type1, type2> _pair, const std::string& delimiter) {
+        ostr << std::get<0>(_pair) << delimiter.c_str() << std::get<1>(_pair) << std::endl;
     }
 
     template<typename type1, typename type2, typename type3>

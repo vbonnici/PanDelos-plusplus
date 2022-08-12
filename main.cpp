@@ -34,6 +34,7 @@ int main(int argc, char* argv[]){
 
     auto sequences = fire.get_sequences();
     auto genome_sequencesid = fire.get_genome_sequencesid();
+    auto genes_id_interval = fire.get_genes_id_interval();
 
     /*** Check kvalue ***/
     Kvalue define_kvalue = Kvalue(&sequences, filename, sequences_type, output, log, &log_stream);
@@ -55,9 +56,8 @@ int main(int argc, char* argv[]){
     auto map_hits = omologus.get_map_hits();
 
     /*** BestHits ***/
-    BestHits bh = BestHits(map_hits, &log_stream);
+    BestHits bh = BestHits(map_hits, genes_id_interval, &log_stream);
     bh.compute_best_hits();
-    //Helper::nested_unordered_map_print<int, int, double>(output_stream, map_hits, " ");
     auto map_best_hits = bh.get_map_best_hits();
 
     /*** BidirectionalBestHits ***/
@@ -66,7 +66,7 @@ int main(int argc, char* argv[]){
     auto vector_tuple_bbh = bbh.get_vector_tuple_bbh();
 
     /*** Paralog ***/
-    Paralog paralog = Paralog(sequences, genome_sequencesid, sequences_type, kmer_size, vector_tuple_bbh, &log_stream);
+    Paralog paralog = Paralog(sequences, genome_sequencesid, genes_id_interval, sequences_type, kmer_size, vector_tuple_bbh, &log_stream);
     paralog.calculate_paralog();
     auto paralog_best_hits = paralog.get_paralog_best_hits();
 
