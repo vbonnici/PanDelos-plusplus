@@ -11,7 +11,6 @@
 #include "include/kvalue.h"
 #include "include/global_options.h"
 #include "Omologus.h"
-#include "Omologusv2.h"
 #include "PreFilter.h"
 
 class Paralog {
@@ -105,7 +104,7 @@ private:
             prefilter.calculate_best_hits(gene_id_pair, this->genome_minimum_jaccard.operator[](i));
             auto prefilter_best_hits = prefilter.get_best_hits();
 
-            Omologusv2 omologus = Omologusv2(this->sequences, prefilter_best_hits, this->sequences_type, this->kmer_size, this->log_stream);
+            Omologus omologus = Omologus(this->sequences, prefilter_best_hits, this->sequences_type, this->kmer_size, this->log_stream);
 
             omologus.init_sequences_kmers();
             omologus.calculate_kmer_multiplicity();

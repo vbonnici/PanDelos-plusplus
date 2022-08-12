@@ -24,7 +24,6 @@
  */
 class PangeneIData {
 public:
-    //TODO: completa documentazione del costruttore dopo aver ottimizzato le strutture dati necessarie
     /*
      * Opens the file and stores in data structures
      *

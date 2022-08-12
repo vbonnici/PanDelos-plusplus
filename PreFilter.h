@@ -102,11 +102,8 @@ public:
 
                 jaccard_similarity = (double) counter_min / counter_max;
 
-                if (counter_max > 0 && jaccard_similarity > jaccard_threshold_in) {
-                    //*this->log_stream << geneid_a << " " << geneid_b << " prefilter jaccard similarity " << jaccard_similarity << std::endl;
-
+                if (counter_max > 0 && jaccard_similarity > jaccard_threshold_in)
                     best_hits_local.emplace_back(std::make_pair(i.first, i.second));
-                }
             }
 
             for (int t = 0; t < omp_get_num_threads(); t++) {
@@ -176,11 +173,8 @@ public:
 
                         jaccard_similarity = (double) counter_min / counter_max;
 
-                        if (counter_max > 0 && jaccard_similarity > this->jaccard_threshold) {
-                            //*this->log_stream << geneid_a << " " << geneid_b << " prefilter jaccard similarity " << jaccard_similarity << std::endl;
-
+                        if (counter_max > 0 && jaccard_similarity > this->jaccard_threshold)
                             best_hits_local.emplace_back(std::make_pair(geneid_a, geneid_b));
-                        }
                     }
 
                 #pragma omp critical
@@ -209,7 +203,7 @@ public:
 
 private:
     const double jaccard_threshold;
-    const int sequences_type; //0 amino acids, 1 nucleotides
+    const int sequences_type;
     const int kmer_size;
     const std::vector<std::string>* sequences;
     const std::vector<std::vector<int>>* genome_sequencesid;

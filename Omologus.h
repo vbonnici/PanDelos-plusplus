@@ -1,5 +1,5 @@
-#ifndef PANDELOS_PLUSPLUS_OMOLOGUS_H
-#define PANDELOS_PLUSPLUS_OMOLOGUS_H
+#ifndef PANDELOS_PLUSPLUS_OMOLOGUSv2_H
+#define PANDELOS_PLUSPLUS_OMOLOGUSv2_H
 
 #include <iostream>
 #include <string>
@@ -55,12 +55,9 @@ public:
                 if(this->sequences_type == 1)
                     kmer = sequence.substr(window, this->kmer_size);
                 else {
-                    std::string aminoacid = sequence.substr(window, this->kmer_size); // /3
+                    std::string aminoacid = sequence.substr(window, this->kmer_size);
 
-                    if(!aminoacid_is_valid(aminoacid))
-                        continue;
-
-                    kmer = Omologus::aminoacid_to_nucleotides(aminoacid);
+                    kmer = Helper::aminoacid_to_nucleotides(aminoacid);
                 }
 
                 if(kmer_is_valid(kmer)) {
@@ -75,8 +72,6 @@ public:
                 }
             }
         }
-
-        //*this->log_stream << "2 - kmer_multiplicity calcolate" << std::endl;
     }
 
     void calculate_best_hits(double jaccard_threshold = 0.0) {
@@ -88,7 +83,6 @@ public:
         unsigned int counter_max;
         double jaccard_similarity;
 
-        //non inserisce duplicati
         for (auto &i: *this->gene_pair) {
             this->map_hits.insert(std::make_pair(i.first, std::unordered_map<int, double>()));
             this->map_hits.insert(std::make_pair(i.second, std::unordered_map<int, double>()));
@@ -108,23 +102,28 @@ public:
             auto kmer_key_a = this->sequences_kmers.find(id_gene_a);
             auto kmer_key_b = this->sequences_kmers.find(id_gene_b);
 
-            for (int j = 0; j < 1 << kvalue; j++) {
-                std::bitset<kvalue> kmer(j);
+            std::map<std::string, int> kmerstring_map_a;
 
-                auto result_a = kmer_key_a->second.find(kmer);
-                auto result_b = kmer_key_b->second.find(kmer);
+            auto kmerbit_map_a = kmer_key_a->second;
 
-                value_a = 0;
-                value_b = 0;
+            for(auto &kmerbit : kmerbit_map_a)
+                kmerstring_map_a.insert(std::make_pair(kmerbit.first.to_string(), kmerbit.second));
 
-                if (result_a != kmer_key_a->second.end())
-                    if (result_a->first == kmer)
-                        value_a = result_a->second;
+            std::map<std::string, int> kmerstring_map_b;
 
+            auto kmerbit_map_b = kmer_key_b->second;
 
-                if (result_b != kmer_key_b->second.end())
-                    if (result_b->first == kmer)
-                        value_b = result_b->second;
+            for(auto &kmerbit : kmerbit_map_b)
+                kmerstring_map_b.insert(std::make_pair(kmerbit.first.to_string(), kmerbit.second));
+
+            auto kmerstring_map_a_b = Helper::UnionMaps<std::string, int, int>(kmerstring_map_a, kmerstring_map_b);
+
+            for(auto &kmer : kmerstring_map_a_b) {
+
+                auto kmercounter_a_b = kmer.second;
+
+                value_a = kmercounter_a_b.first;
+                value_b = kmercounter_a_b.second;
 
                 if(value_a > value_b) {
                     counter_min += value_b;
@@ -136,8 +135,8 @@ public:
                 }
             }
 
+
             jaccard_similarity = (double) counter_min / counter_max;
-            //*this->log_stream << id_gene_a << " " << id_gene_b << " omologus jaccard similarity " << jaccard_similarity << std::endl;
 
             if (counter_max > 0 && jaccard_similarity >= jaccard_threshold) {
                 auto result_a = this->map_hits.find(id_gene_a);
@@ -152,9 +151,6 @@ public:
                 result_b->second.insert(std::make_pair(id_gene_a, jaccard_similarity));
             }
         }
-
-        //*this->log_stream << "2 - compute best hits " << std::endl;
-
     }
 
     std::vector<int>& get_sequences_id() {
@@ -176,7 +172,7 @@ public:
 private:
     std::ofstream* log_stream;
     int kmer_size;
-    const int sequences_type; //0 amino acids, 1 nucleotides
+    const int sequences_type;
     std::vector<int> sequences_id;
     std::unordered_map<int, std::map<std::bitset<kvalue>, int, Helper::bitset_comparer<kvalue>>> sequences_kmers;   //map<sequence_id - map<kmer, contatore>>
 
@@ -190,11 +186,6 @@ private:
             return str.length() == this->kmer_size*3 && str.find_first_not_of("ACGT") == std::string::npos;
         else
             return str.length() == this->kmer_size && str.find_first_not_of("ACGT") == std::string::npos;
-    }
-
-    [[nodiscard]] static bool aminoacid_is_valid(const std::string &str) {
-        //return str.find_first_not_of("FLIMVSPTAY*HQNKDECWRG") == std::string::npos;
-        return true;
     }
 
     static std::bitset<kvalue> kmer_to_bit(std::string& kmer) {
@@ -237,77 +228,5 @@ private:
         this->sequences_id.reserve(temp_sequences.size());
         this->sequences_id.assign(temp_sequences.begin(), temp_sequences.end());
     }
-
-    static std::string aminoacid_to_nucleotides(std::basic_string<char> aminoacid) {
-        std::string kmer;
-
-        for(int a = 0; a < aminoacid.length(); ++a) {
-
-            if(reinterpret_cast<char>(aminoacid[a]) == 'F')
-                kmer += "TTT";
-
-            else if(reinterpret_cast<char>(aminoacid[a]) == 'L')
-                kmer += "TTA";
-
-            else if(reinterpret_cast<char>(aminoacid[a]) == 'I')
-                kmer += "ATT";
-
-            else if (reinterpret_cast<char>(aminoacid[a]) == 'M')
-                kmer += "ATG";
-
-            else if (reinterpret_cast<char>(aminoacid[a]) == 'V')
-                kmer += "GTT";
-
-            else if (reinterpret_cast<char>(aminoacid[a]) == 'S')
-                kmer += "TCT";
-
-            else if (reinterpret_cast<char>(aminoacid[a]) == 'P')
-                kmer += "CCT";
-
-            else if (reinterpret_cast<char>(aminoacid[a]) == 'T')
-                kmer += "ACT";
-
-            else if (reinterpret_cast<char>(aminoacid[a]) == 'A')
-                kmer += "GCT";
-
-            else if (reinterpret_cast<char>(aminoacid[a]) == 'Y')
-                kmer += "TAT";
-
-            else if (reinterpret_cast<char>(aminoacid[a]) == '*')
-                kmer += "TAA";
-
-            else if (reinterpret_cast<char>(aminoacid[a]) == 'H')
-                kmer += "CAT";
-
-            else if (reinterpret_cast<char>(aminoacid[a]) == 'Q')
-                kmer += "CAA";
-
-            else if (reinterpret_cast<char>(aminoacid[a]) == 'N')
-                kmer += "AAT";
-
-            else if (reinterpret_cast<char>(aminoacid[a]) == 'K')
-                kmer += "AAA";
-
-            else if (reinterpret_cast<char>(aminoacid[a]) == 'D')
-                kmer += "GAT";
-
-            else if (reinterpret_cast<char>(aminoacid[a]) == 'E')
-                kmer += "GAA";
-
-            else if (reinterpret_cast<char>(aminoacid[a]) == 'C')
-                kmer += "TGT";
-
-            else if (reinterpret_cast<char>(aminoacid[a]) == 'W')
-                kmer += "TGG";
-
-            else if (reinterpret_cast<char>(aminoacid[a]) == 'R')
-                kmer += "CGT";
-
-            else if (reinterpret_cast<char>(aminoacid[a]) == 'G')
-                kmer += "GGG";
-        }
-
-        return kmer;
-    }
 };
-#endif //PANDELOS_PLUSPLUS_OMOLOGUS_H
+#endif //PANDELOS_PLUSPLUS_OMOLOGUSv2_H
