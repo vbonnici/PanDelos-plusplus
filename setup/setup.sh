@@ -2,7 +2,7 @@
 
 g++ -w -std=c++17 -fopenmp -O3 src/cpp/main.cpp -o bin/pandelos_plus_plus.out
 
-echo "Finished build"
+echo "Build completed without errors"
 
 while true; do
     read -p "Do you want to download the sample files from the internet? " yn
@@ -20,8 +20,6 @@ done
 mkdir ../pandelos_data/mycoplasma_panprova
 
 wget https://pangenes.s3.eu-south-1.amazonaws.com/mycoplasma_panprova/mycoplasma_panprova_16.zip -O ../pandelos_data/mycoplasma_panprova/mycoplasma_panprova_16.zip
-
-#wget http://localhost:8888/mycoplasma_panprova_16.zip
 
 unzip ../pandelos_data/mycoplasma_panprova/mycoplasma_panprova_16.zip -d ../pandelos_data/mycoplasma_panprova/ && rm ../pandelos_data/mycoplasma_panprova/mycoplasma_panprova_16.zip
 

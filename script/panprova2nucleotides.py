@@ -54,7 +54,6 @@ for line in open(igff,'r'):
 
         geneid += 1
 
-off.write('\n')
 off.flush()
 off.close()        
 

@@ -164,8 +164,6 @@ def print_family_descriptions(fam):
 
 if __name__ == '__main__':
 
-    print(os.getcwd())
-
     iseqs = sys.argv[1]
     inet = sys.argv[2]
 
