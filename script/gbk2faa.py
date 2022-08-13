@@ -19,7 +19,7 @@ def read_gbk(ifile, genome_id):
     genome_cdslist = genome2cdstag.get(genome_id, list())
 
     for record in SeqIO.parse(ifile, "genbank"):
-        sequence_id = record.id 
+        sequence_id = record.id
         #genome_id = record.annotations['accessions'][-1]
         print("\t"+genome_id+"\t"+sequence_id)
         for feature in record.features:
@@ -39,25 +39,33 @@ idir = sys.argv[1]
 ofile = sys.argv[2]
 print("reading gbk files from", idir)
 
-gbkfiles = [f for f in listdir(idir) if isfile(join(idir, f)) and re.match('^.+\.gbk$', f)]
+files = listdir(idir)
+files.sort(key=lambda f: int(re.sub('\D', '', f))) #.faa files must have a unique numeric id in the name
+
+if len(sys.argv) > 2:
+    limit_files = int(sys.argv[3])
+    gbkfiles = [f for f in files[:limit_files] if isfile(join(idir, f)) and re.match('^.+\.gbk$', f)]
+else:
+    gbkfiles = [f for f in files if isfile(join(idir, f)) and re.match('^.+\.gbk$', f)]
+
 print(gbkfiles)
 
 for gbk in gbkfiles:
-	print(gbk)
-	read_gbk(idir + gbk, re.sub('\.gbk$', '', gbk))
+    print(gbk)
+    read_gbk(idir + gbk, re.sub('\.gbk$', '', gbk))
 
 
 uniques = dict()
 
 print('writing to', ofile)
 with open(ofile, 'w') as off:
-	for k in sorted(cdsseqs.keys()):
-		gen_id = k[0]+":"+k[1]
-		if gen_id not in uniques:
-			uniques[ gen_id ] = dict()
-		uniques[ gen_id ][k[2]] = uniques[ gen_id ].get(k[2],0) + 1
-		cc = uniques[ gen_id ][k[2]]
-		acc = k[0]+":"+k[1]+":"+k[2]+":"+str(cc)
-		#off.write(k[0]+"\t"+k[1]+"\t"+ cdstag2product[k] +"\n")
-		off.write(k[0]+"\t"+ acc +"\t"+ cdstag2product[k] +"\n")
-		off.write(cdsseqs[k]+"\n")
+    for k in sorted(cdsseqs.keys()):
+        gen_id = k[0]+":"+k[1]
+        if gen_id not in uniques:
+            uniques[ gen_id ] = dict()
+        uniques[ gen_id ][k[2]] = uniques[ gen_id ].get(k[2],0) + 1
+        cc = uniques[ gen_id ][k[2]]
+        acc = k[0]+":"+k[1]+":"+k[2]+":"+str(cc)
+        #off.write(k[0]+"\t"+k[1]+"\t"+ cdstag2product[k] +"\n")
+        off.write(k[0]+"\t"+ acc +"\t"+ cdstag2product[k] +"\n")
+        off.write(cdsseqs[k]+"\n")

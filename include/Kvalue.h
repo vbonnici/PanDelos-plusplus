@@ -86,7 +86,7 @@ private:
 
             std::stringstream ss;
 
-            ss << "g++ -w -std=c++17 -fopenmp -O3 src/cpp/main.cpp -o bin/pandelos.out && bin/pandelos_plus_plus.out" << " -f " << filename << " -s " << sequences_type << " -o " << output << " -l " << logfile;
+            ss << "g++ -w -std=c++17 -fopenmp -O3 src/cpp/main.cpp -o bin/pandelos_plus_plus.out && bin/pandelos_plus_plus.out" << " -f " << filename << " -s " << sequences_type << " -o " << output << " -l " << logfile;
 
             std::string command = ss.str();
 
