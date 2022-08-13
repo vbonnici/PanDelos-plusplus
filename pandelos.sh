@@ -16,6 +16,7 @@ output_file=$2
 sequences_type=$3
 log_file=$4
 clus_file=$5
+coco_file=$6
 
 echo "Clustering: "
 date
@@ -29,13 +30,7 @@ echo -e
 
 echo "De-clustering: "
 date
-echo "Start netclu_ng_parallel " >> '../pandelos_output/'$log_file
-echo -e >> '../pandelos_output/'$log_file
-echo -e >> '../pandelos_output/'$log_file
-python3 src/python/netclu_ng_parallel.py '../pandelos_data/'$input_file '../pandelos_output/'$output_file >> '../pandelos_output/'$log_file
-echo "End netclu_ng_parallel " >> '../pandelos_output/'$log_file
-echo -e >> '../pandelos_output/'$log_file
-echo -e >> '../pandelos_output/'$log_file
+python3 src/python/netclu_ng_parallel.py '../pandelos_data/'$input_file '../pandelos_output/'$output_file >> '../pandelos_output/'$coco_file
 date
 
 echo -e
@@ -43,7 +38,7 @@ echo -e
 
 echo "Writing gene gene families in file clus: "
 date
-grep "F{ " '../pandelos_output/'$log_file | sed s/F{\ //g | sed s/}//g | sed s/\ \;//g | sort | uniq >'../pandelos_output/'$clus_file
+grep "F{ " '../pandelos_output/'$coco_file | sed s/F{\ //g | sed s/}//g | sed s/\ \;//g | sort | uniq >'../pandelos_output/'$clus_file
 date
 
 echo -e
@@ -52,8 +47,6 @@ echo -e
 echo "Quality: "
 date
 echo "Quality: " >> '../pandelos_output/'$log_file
-echo -e >> '../pandelos_output/'$log_file
-echo -e >> '../pandelos_output/'$log_file
 python3 src/python/quality.py '../pandelos_data/'$input_file '../pandelos_output/'$clus_file >> '../pandelos_output/'$log_file
 echo -e >> '../pandelos_output/'$log_file
 echo -e >> '../pandelos_output/'$log_file

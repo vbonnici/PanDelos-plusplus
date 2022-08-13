@@ -26,7 +26,7 @@ public:
             for(char a : i)
                 this->alphabet.insert(a);
 
-        *this->log_stream << "alfabeto calcolato: " << std::endl;
+        *this->log_stream << "Calculated alphabet: " << std::endl;
 
         for(auto &i : this->alphabet)
             *this->log_stream << i << " ";
@@ -41,7 +41,8 @@ public:
         else
             this->kmer_size = (int)(log(this->genes_lenght) / log(4));
 
-        *this->log_stream << "1 - gene length: " << this->genes_lenght << " kmer size " << this->kmer_size << std::endl;
+        *this->log_stream << "Gene length: " << this->genes_lenght << std::endl;
+        *this->log_stream << "Kmer size: " << this->kmer_size << std::endl;
 
         this->check_kvalue_file(filename, sequences_type, output, logfile);
     }

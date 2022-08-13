@@ -82,7 +82,7 @@ public:
             this->genes_id_interval.emplace_back(std::make_pair(*min, *max));
         }
 
-        *this->log_stream << "File di input letto correttamente" << std::endl;
+        *this->log_stream << "Input file read correctly" << std::endl;
     }
 
     /*

@@ -70,8 +70,6 @@ public:
                 }
             }
         }
-
-        *this->log_stream << "2 - bidirectional best hits calcolati" << std::endl;
     }
 
     std::vector<std::tuple<int, int, double>>& get_vector_tuple_bbh() {

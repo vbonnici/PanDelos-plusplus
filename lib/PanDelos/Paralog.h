@@ -49,7 +49,7 @@ public:
 private:
     std::ofstream* log_stream;
     int kmer_size;
-    const int sequences_type; //0 amino acids, 1 nucleotides
+    const int sequences_type;
     int genome_counter;
     std::vector<std::vector<int>> genome_sequencesid;
     std::vector<double> genome_minimum_jaccard;
@@ -74,9 +74,9 @@ private:
             }
         }
 
-        for(int i = 0; i < this->genome_counter; ++i) {
+        /*for(int i = 0; i < this->genome_counter; ++i) {
             *this->log_stream << "genome id " << i << " minimum jaccard " << this->genome_minimum_jaccard.operator[](i) << std::endl;
-        }
+        }*/
     }
 
     void calculate_paralog_best_hits() {

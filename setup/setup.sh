@@ -25,7 +25,7 @@ unzip ../pandelos_data/mycoplasma_panprova/mycoplasma_panprova_16.zip -d ../pand
 
 mkdir ../pandelos_data/escherichia_panprova
 
-wget -O ../pandelos_data/escherichia_panprova/escherichia_panprova_16.zip https://pangenes.s3.eu-south-1.amazonaws.com/escherichia_panprova/escherichia_panprova_16.zip
+wget https://pangenes.s3.eu-south-1.amazonaws.com/escherichia_panprova/escherichia_panprova_16.zip -O ../pandelos_data/escherichia_panprova/escherichia_panprova_16.zip
 
 unzip ../pandelos_data/escherichia_panprova/escherichia_panprova_16.zip -d ../pandelos_data/escherichia_panprova/ && rm ../pandelos_data/escherichia_panprova/escherichia_panprova_16.zip
 
@@ -68,8 +68,8 @@ bash PanDelos-plusplus/script/panprova2gbk.sh $current_path'/pandelos_data/esche
 #
 echo "Transform .gbk files into .faa files"
 
-bash PanDelos-plusplus/script/gbk2faa.sh $current_path'/pandelos_data/mycoplasma_panprova/' $current_path'/pandelos_data/example3/mycoplasma_panprova_'
+bash PanDelos-plusplus/script/gbk2faa.sh $current_path'/pandelos_data/mycoplasma_panprova/' $current_path'/pandelos_data/example3/mycoplasma_'
 
-bash PanDelos-plusplus/script/gbk2faa.sh $current_path'/pandelos_data/escherichia_panprova/' $current_path'/pandelos_data/example4/escherichia_panprova_'
+bash PanDelos-plusplus/script/gbk2faa.sh $current_path'/pandelos_data/escherichia_panprova/' $current_path'/pandelos_data/example4/escherichia_'
 
 echo "Setup finished"

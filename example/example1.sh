@@ -24,6 +24,6 @@ for range in "${ranges[@]}"; do
         [ -z "$start" ] && continue
         [ -z "$end" ] && end=$start
         for (( i=start ; i <= end ; i++ )); do
-             [ $((i%2)) -eq 0 ] && bash pandelos.sh 'example1/mycoplasma_'$i'.faa' 'example1/output_mycoplasma_'$i'.net' 1 'example1/log_mycoplasma_'$i'.txt' 'example1/mycoplasma_'$i'.clus'
+             [ $((i%2)) -eq 0 ] && bash pandelos.sh 'example1/mycoplasma_'$i'.faa' 'example1/output_mycoplasma_'$i'.net' 1 'example1/log_mycoplasma_'$i'.txt' 'example1/mycoplasma_'$i'.clus' 'example1/mycoplasma_coco_'$i'.txt'
         done
 done

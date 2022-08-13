@@ -24,6 +24,6 @@ for range in "${ranges[@]}"; do
         [ -z "$start" ] && continue
         [ -z "$end" ] && end=$start
         for (( i=start ; i <= end ; i++ )); do
-             [ $((i%2)) -eq 0 ] && bash pandelos.sh 'example4/escherichia_'$i'.faa' 'example4/output_escherichia_'$i'.net' 0 'example4/log_escherichia_'$i'.txt' 'example4/escherichia_'$i'.clus'
+             [ $((i%2)) -eq 0 ] && bash pandelos.sh 'example4/escherichia_'$i'.faa' 'example4/output_escherichia_'$i'.net' 0 'example4/log_escherichia_'$i'.txt' 'example4/escherichia_'$i'.clus' 'example4/escherichia_coco_'$i'.txt'
         done
 done

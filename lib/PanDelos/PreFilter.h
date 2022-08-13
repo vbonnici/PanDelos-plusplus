@@ -34,7 +34,7 @@ public:
         this->sequences = &sequences;
         this->genome_sequencesid = &genome_sequencesid;
         this->best_hits.reserve(sequences.size()*sequences.size());
-        *this->log_stream << "byte riservati per prefilter best hits: " << sequences.size() * sequences.size() << std::endl;
+        //*this->log_stream << "Bytes reserved for the prefiltering phase: " << sequences.size() * sequences.size() << std::endl;
     }
 
     void init_sequences_kmers() {
@@ -52,7 +52,7 @@ public:
         else
             this->calculate_kmer_multiplicity_nucleotides();
 
-        *this->log_stream << "1 - kmer_multiplicity calcolate" << std::endl;
+        //*this->log_stream << "Prefiltering - kmer multiplicity calculated" << std::endl;
     }
 
     void calculate_best_hits(const std::vector<std::pair<int, int>>& gene_id_pair_in, double jaccard_threshold_in) {
@@ -183,11 +183,9 @@ public:
             gettimeofday(&tempo,nullptr); t2 = tempo.tv_sec+(tempo.tv_usec/1000000.0);
             sum = (t2-t1);
 
-            *this->log_stream << "Tempo computazione genoma " << index << " con gli altri genomi " << sum << std::endl;
-            *this->log_stream << "Best hits in array: " << this->best_hits.size() << std::endl;
+            //*this->log_stream << "Genome computation time " << index << " with other genomes " << sum << std::endl;
+            //*this->log_stream << "Best hits in array: " << this->best_hits.size() << std::endl;
         }
-
-        *this->log_stream << "1 - best hits calcolati " << std::endl;
     }
 
     std::vector<std::array<unsigned int, 4095>>& get_sequences_kmers() {
@@ -197,7 +195,6 @@ public:
     std::vector<std::pair<int, int>>& get_best_hits() {
         return this->best_hits;
     }
-
 
 private:
     const double jaccard_threshold;

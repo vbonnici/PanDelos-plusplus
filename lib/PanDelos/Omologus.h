@@ -71,6 +71,8 @@ public:
                 }
             }
         }
+
+        //*this->log_stream << "Omologus - kmer multiplicity calculated" << std::endl;
     }
 
     void calculate_best_hits(double jaccard_threshold = 0.0) {
