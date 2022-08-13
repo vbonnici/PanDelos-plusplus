@@ -2,15 +2,8 @@
 
 import sys
 import networkx as nx
-import time
 from multiprocessing import Pool
 import itertools
-from itertools import count
-from heapq import heappush, heappop
-import random
-import functools
-import operator
-import os
 
 def girvan_newman(G, most_valuable_edge=None):
 

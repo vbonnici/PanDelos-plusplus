@@ -55,7 +55,6 @@ public:
                     kmer = sequence.substr(window, this->kmer_size);
                 else {
                     std::string aminoacid = sequence.substr(window, this->kmer_size);
-
                     kmer = Helper::aminoacid_to_nucleotides(aminoacid);
                 }
 

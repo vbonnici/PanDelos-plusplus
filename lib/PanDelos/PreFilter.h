@@ -17,7 +17,7 @@
 #include "../../conf/conf.h"
 #include "../../include/Helper.h"
 
-struct timeval tempo{};
+struct timeval time{};
 double t1, t2, sum;
 
 
@@ -129,7 +129,7 @@ public:
 
         for(index = 0; index < this->genome_sequencesid->size(); index++) {
 
-            gettimeofday(&tempo,nullptr); t1 = tempo.tv_sec+(tempo.tv_usec/1000000.0);
+            gettimeofday(&time,nullptr); t1 = time.tv_sec+(time.tv_usec/1000000.0);
             std::vector<int> genome_a = this->genome_sequencesid->operator[](index);
 
             #pragma omp parallel for shared(genome_a) private(jaccard_similarity, counter_min, counter_max, sequence_a, sequence_b, value_a, value_b)
@@ -180,7 +180,7 @@ public:
 
             }
 
-            gettimeofday(&tempo,nullptr); t2 = tempo.tv_sec+(tempo.tv_usec/1000000.0);
+            gettimeofday(&time,nullptr); t2 = time.tv_sec+(time.tv_usec/1000000.0);
             sum = (t2-t1);
 
             //*this->log_stream << "Genome computation time " << index << " with other genomes " << sum << std::endl;
