@@ -17,7 +17,7 @@
 #include "../../conf/conf.h"
 #include "../../include/Helper.h"
 
-struct timeval time{};
+struct timeval chrono{};
 double t1, t2, sum;
 
 
@@ -129,7 +129,7 @@ public:
 
         for(index = 0; index < this->genome_sequencesid->size(); index++) {
 
-            gettimeofday(&time,nullptr); t1 = time.tv_sec+(time.tv_usec/1000000.0);
+            gettimeofday(&chrono,nullptr); t1 = chrono.tv_sec+(chrono.tv_usec/1000000.0);
             std::vector<int> genome_a = this->genome_sequencesid->operator[](index);
 
             #pragma omp parallel for shared(genome_a) private(jaccard_similarity, counter_min, counter_max, sequence_a, sequence_b, value_a, value_b)
@@ -180,7 +180,7 @@ public:
 
             }
 
-            gettimeofday(&time,nullptr); t2 = time.tv_sec+(time.tv_usec/1000000.0);
+            gettimeofday(&chrono,nullptr); t2 = chrono.tv_sec+(chrono.tv_usec/1000000.0);
             sum = (t2-t1);
 
             //*this->log_stream << "Genome computation time " << index << " with other genomes " << sum << std::endl;
@@ -243,15 +243,19 @@ private:
     }
 
     void calculate_kmer_multiplicity_nucleotides() {
-        for(int k = 0; k < this->sequences_kmers.size(); ++k) {
+        std::string sequence;
+        std::string kmer;
+        int kmer_in_int;
 
-            std::string sequence = this->sequences->operator[](k);
+        #pragma omp parallel for private(sequence, kmer, kmer_in_int)
+        for(int k = 0; k < this->sequences_kmers.size(); ++k) {
+            sequence = this->sequences->operator[](k);
 
             for(int window = 0; window < sequence.length() - this->kmer_size + 1; window++) {
-                std::string kmer = sequence.substr(window, this->kmer_size);
+                kmer = sequence.substr(window, this->kmer_size);
 
-                if(kmer_is_valid(kmer)) {
-                    int kmer_in_int = PreFilter::kmer_to_int(kmer);
+                if(this->kmer_is_valid(kmer)) {
+                    kmer_in_int = PreFilter::kmer_to_int(kmer);
 
                     this->sequences_kmers.operator[](k).operator[](kmer_in_int) += 1;
                 }
@@ -260,16 +264,21 @@ private:
     }
 
     void calculate_kmer_multiplicity_aminoacids() {
-        for(int k = 0; k < this->sequences_kmers.size(); ++k) {
+        std::string sequence;
+        std::string aminoacid;
+        std::string kmer;
+        int kmer_in_int;
 
-            std::string sequence = this->sequences->operator[](k);
+        #pragma omp parallel for private(sequence, aminoacid, kmer, kmer_in_int)
+        for(int k = 0; k < this->sequences_kmers.size(); ++k) {
+            sequence = this->sequences->operator[](k);
 
             for(int window = 0; window < sequence.length() - this->kmer_size + 1; window++) {
-                std::string aminoacid = sequence.substr(window, 2);
+                aminoacid = sequence.substr(window, 2);
 
-                std::string kmer = Helper::aminoacid_to_nucleotides(aminoacid);
+                kmer = Helper::aminoacid_to_nucleotides(aminoacid);
 
-                int kmer_in_int = PreFilter::kmer_to_int(kmer);
+                kmer_in_int = PreFilter::kmer_to_int(kmer);
 
                 this->sequences_kmers.operator[](k).operator[](kmer_in_int) += 1;
             }
