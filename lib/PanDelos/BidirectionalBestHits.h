@@ -41,18 +41,16 @@ public:
                 double jaccard = submap.second;
 
                 //it: chiave uguale a gene_b
-                auto it = std::find_if(this->map_best_hits->begin(), this->map_best_hits->end(),
-                                       [&id_gene_b](const auto& key){ return key.first == id_gene_b;});
+                auto it = this->map_best_hits->find(id_gene_b);
 
                 if(it != this->map_best_hits->end()) {
 
                     //cerca il gene a come chiave della mappa di it (it->second)
-                    auto it2 = std::find_if(it->second.begin(), it->second.end(),
-                                            [&id_gene_a](const auto& key){ return key.first == id_gene_a;});
+                    auto it2 = it->second.find(id_gene_a);
 
                     if(it2 != it->second.end()) {
 
-                        auto it3 = std::find_if(this->vector_tuple_bbh.begin(),
+                        /*auto it3 = std::find_if(this->vector_tuple_bbh.begin(),
                                                 this->vector_tuple_bbh.end(),
                                                 [&id_gene_a, &id_gene_b, &jaccard](const std::tuple<int,int,double>& e) {
                                                             return (std::get<0>(e) == id_gene_a &&
@@ -64,7 +62,8 @@ public:
                                                 });
 
 
-                        if(it3 == this->vector_tuple_bbh.end())
+                        if(it3 == this->vector_tuple_bbh.end())*/
+                        //if(id_gene_a < id_gene_b) //da testare
                             this->vector_tuple_bbh.emplace_back(std::make_tuple(id_gene_a, id_gene_b, jaccard));
                     }
                 }
