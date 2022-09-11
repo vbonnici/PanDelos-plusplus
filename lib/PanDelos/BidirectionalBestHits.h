@@ -18,7 +18,6 @@ public:
 
 
     /*
-     *
      *  Date:
      *  A chiave di map_best_hits   (gene A)
      *  B valore di map_best_hits   (mappa C)
@@ -48,24 +47,9 @@ public:
                     //cerca il gene a come chiave della mappa di it (it->second)
                     auto it2 = it->second.find(id_gene_a);
 
-                    if(it2 != it->second.end()) {
-
-                        /*auto it3 = std::find_if(this->vector_tuple_bbh.begin(),
-                                                this->vector_tuple_bbh.end(),
-                                                [&id_gene_a, &id_gene_b, &jaccard](const std::tuple<int,int,double>& e) {
-                                                            return (std::get<0>(e) == id_gene_a &&
-                                                                    std::get<1>(e) == id_gene_b &&
-                                                                    std::get<2>(e) == jaccard) ||
-                                                                    (std::get<0>(e) == id_gene_b &&
-                                                                     std::get<1>(e) == id_gene_a &&
-                                                                     std::get<2>(e) == jaccard);
-                                                });
-
-
-                        if(it3 == this->vector_tuple_bbh.end())*/
-                        //if(id_gene_a < id_gene_b) //da testare
+                    if(it2 != it->second.end())
+                        if(id_gene_a < id_gene_b)
                             this->vector_tuple_bbh.emplace_back(std::make_tuple(id_gene_a, id_gene_b, jaccard));
-                    }
                 }
             }
         }
