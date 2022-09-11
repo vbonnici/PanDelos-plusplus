@@ -32,9 +32,6 @@ public:
 
 
     void calculate_paralog() {
-
-        this->genome_minimum_jaccard.reserve(this->genome_counter);
-
         for(int i = 0; i < this->genome_counter; ++i)
             this->genome_minimum_jaccard.push_back(1.0);
 
@@ -87,9 +84,7 @@ private:
             min_gene_id = std::get<0>(this->genes_id_interval->operator[](i));
             max_gene_id = std::get<1>(this->genes_id_interval->operator[](i));
 
-
             std::vector<std::pair<int, int>> gene_id_pair;
-            gene_id_pair.reserve(max_gene_id*max_gene_id);
 
             for(int a = min_gene_id; a <= max_gene_id; ++a)
                 for(int b = a+1; b <= max_gene_id; ++b)

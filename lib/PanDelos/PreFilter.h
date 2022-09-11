@@ -33,12 +33,9 @@ public:
 
         this->sequences = &sequences;
         this->genome_sequencesid = &genome_sequencesid;
-        this->best_hits.reserve(sequences.size()*sequences.size());
-        //*this->log_stream << "Bytes reserved for the prefiltering phase: " << sequences.size() * sequences.size() << std::endl;
     }
 
     void init_sequences_kmers() {
-        this->sequences_kmers.reserve(this->sequences->size());
         for(int i = 0; i < this->sequences->size(); ++i) {
             std::array<unsigned int, 4095> array{0};
 
@@ -51,8 +48,6 @@ public:
             this->calculate_kmer_multiplicity_aminoacids();
         else
             this->calculate_kmer_multiplicity_nucleotides();
-
-        //*this->log_stream << "Prefiltering - kmer multiplicity calculated" << std::endl;
     }
 
     void calculate_best_hits(const std::vector<std::pair<int, int>>& gene_id_pair_in, double jaccard_threshold_in) {
@@ -137,8 +132,6 @@ public:
 
                 std::vector<std::pair<int, int>> best_hits_local;
                 std::vector<int> genome_b = this->genome_sequencesid->operator[](i);
-
-                best_hits_local.reserve(genome_a.size() * genome_b.size());
 
                 for(auto &geneid_a: genome_a)
                     for(auto &geneid_b : genome_b) {
