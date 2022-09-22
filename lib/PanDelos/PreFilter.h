@@ -17,6 +17,9 @@
 #include "../../conf/conf.h"
 #include "../../include/Helper.h"
 
+#define JACCARD_THRESHOLD 0.7
+#define KMER_SIZE 6
+
 struct timeval chrono{};
 double t1, t2, sum;
 
@@ -28,7 +31,7 @@ public:
                        const std::vector<std::vector<int>>& genome_sequencesid,
                        const int sequences_type,
                        std::ofstream* log_stream) :
-        jaccard_threshold(0.7), sequences_type(sequences_type), kmer_size(6) {
+        jaccard_threshold(JACCARD_THRESHOLD), sequences_type(sequences_type), kmer_size(KMER_SIZE) {
 
         if(log_stream->bad())
             throw std::runtime_error("the log stream's badbit error state flag is set");
@@ -47,7 +50,7 @@ public:
         this->calculate_kmer_multiplicity();
     }
 
-    void find_candidate_sequences(const std::vector<std::pair<int, int>>& gene_id_pair_in, const double jaccard_threshold_in) {
+    void find_candidate_sequences(std::vector<std::pair<int, int>>& gene_id_pair_in, double jaccard_threshold_in = JACCARD_THRESHOLD) {
         unsigned int value_a;
         unsigned int value_b;
         unsigned int counter_min;
@@ -55,6 +58,20 @@ public:
         double jaccard_similarity;
         std::string sequence_a;
         std::string sequence_b;
+
+        if(gene_id_pair_in.empty()) {
+            for (int index = 0; index < this->genome_sequencesid->size(); index++) {
+                std::vector<int> genome_a = this->genome_sequencesid->operator[](index);
+
+                for (int i = index + 1; i < this->genome_sequencesid->size(); i++) {
+                    std::vector<int> genome_b = this->genome_sequencesid->operator[](i);
+
+                    for (auto &geneid_a: genome_a)
+                        for (auto &geneid_b: genome_b)
+                            gene_id_pair_in.emplace_back(std::make_pair(geneid_a, geneid_b));
+                }
+            }
+        }
 
         omp_set_num_threads(omp_get_num_procs());
 
@@ -290,6 +307,16 @@ private:
     }
 
     static bool check_constraint(const std::string& sequence_a, const std::string& sequence_b) {
+        if(sequence_a.length() >= sequence_b.length()*2 || sequence_b.length() >= sequence_a.length()*2)
+            return false;
+
+        return true;
+    }
+
+    [[nodiscard]] bool check_constraint(const int gene_id_a, const int gene_id_b) const {
+        const std::string sequence_a = this->input_sequences->operator[](gene_id_a);
+        const std::string sequence_b = this->input_sequences->operator[](gene_id_b);
+
         if(sequence_a.length() >= sequence_b.length()*2 || sequence_b.length() >= sequence_a.length()*2)
             return false;
 
