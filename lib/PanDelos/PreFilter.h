@@ -24,8 +24,8 @@ double t1, t2, sum;
 class PreFilter {
 public:
 
-    explicit PreFilter(const std::vector<std::string> &input_sequences,
-                       const std::vector<std::vector<int>> &genome_sequencesid,
+    explicit PreFilter(const std::vector<std::string>& input_sequences,
+                       const std::vector<std::vector<int>>& genome_sequencesid,
                        const int sequences_type,
                        std::ofstream* log_stream) :
         jaccard_threshold(0.7), sequences_type(sequences_type), kmer_size(6) {
@@ -47,7 +47,7 @@ public:
         this->calculate_kmer_multiplicity();
     }
 
-    void find_candidate_sequences(const std::vector<std::pair<int, int>>& gene_id_pair_in, double jaccard_threshold_in) {
+    void find_candidate_sequences(const std::vector<std::pair<int, int>>& gene_id_pair_in, const double jaccard_threshold_in) {
         unsigned int value_a;
         unsigned int value_b;
         unsigned int counter_min;
@@ -178,14 +178,14 @@ public:
         }
     }
 
-    std::vector<std::array<unsigned int, 4095>>& get_sequences_kmers() {
+    const std::vector<std::array<unsigned int, 4095>>& get_sequences_kmers() {
         if(this->sequences_kmers.empty())
             throw std::runtime_error("sequences kmers vector is empty");
 
         return this->sequences_kmers;
     }
 
-    std::vector<std::pair<int, int>>& get_candidate_sequences() {
+    const std::vector<std::pair<int, int>>& get_candidate_sequences() {
         if(this->candidate_sequences.empty())
             throw std::runtime_error("candidate sequences vector is empty");
 

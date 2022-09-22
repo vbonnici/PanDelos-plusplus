@@ -19,10 +19,17 @@ public:
      * For each gene sequence, it inserts each character of which it is composed into an unordered set
      * (if not yet present)
      */
-    explicit Kvalue(const std::vector<std::string>* sequences_input, const char* filename, int sequences_type, const std::string& output, const std::string& logfile, std::ofstream* log_stream) {
-        this->log_stream = log_stream;
+    explicit Kvalue(const std::vector<std::string>& input_sequences, const char* filename, const int sequences_type, const std::string& output, const std::string& logfile, std::ofstream* log_stream) {
+        if(log_stream->bad())
+            throw std::runtime_error("the log stream's badbit error state flag is set");
 
-        for (auto &i: *sequences_input)
+        if(input_sequences.empty())
+            throw std::runtime_error("input sequences vector is empty");
+
+        this->log_stream = log_stream;
+        this->input_sequences = &input_sequences;
+
+        for (auto &i: *this->input_sequences)
             for(char a : i)
                 this->alphabet.insert(a);
 
@@ -33,7 +40,7 @@ public:
         *this->log_stream << std::endl;
 
         this->genes_lenght = 0;
-        for(auto &i : *sequences_input)
+        for(auto &i : *this->input_sequences)
             this->genes_lenght += i.length();
 
         if(sequences_type == 0)
@@ -47,7 +54,7 @@ public:
         this->check_kvalue_file(filename, sequences_type, output, logfile);
     }
 
-    std::unordered_set<char> get_alphabet() {
+    [[nodiscard]] std::unordered_set<char> get_alphabet() const {
         return this->alphabet;
     }
 
@@ -60,8 +67,9 @@ private:
     int kmer_size;
     int genes_lenght;
     std::ofstream* log_stream;
+    const std::vector<std::string>* input_sequences;
 
-    void check_kvalue_file(const char* filename, int sequences_type, const std::string& output, const std::string& logfile) const {
+    void check_kvalue_file(const char* filename, const int sequences_type, const std::string& output, const std::string& logfile) const {
         int kvalue_size_expected;
 
         if(sequences_type == 0)

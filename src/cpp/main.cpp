@@ -24,25 +24,44 @@ int main(int argc, char* argv[]){
     parser.parse_arguments(argc, argv);
 
     const char* filename = parser.get_filename();
-    int sequences_type = parser.get_sequences_type();
-    std::string output = parser.get_output();
-    std::string log = parser.get_log();
+    const int sequences_type = parser.get_sequences_type();
+    const std::string output = parser.get_output();
+    const std::string log = parser.get_log();
 
     std::ofstream log_stream(log, std::ofstream::trunc);
     std::ofstream output_stream(output, std::ofstream::trunc);
 
     /*** File parsing ***/
         gettimeofday(&time,nullptr); total_time_start = time.tv_sec+(time.tv_usec/1000000.0);
-    PangeneIData file_reader = PangeneIData(filename, &log_stream);
-    file_reader.close();
+    std::vector<std::string> sequences;
+    std::vector<std::vector<int>> genome_sequencesid;
+    std::vector<std::pair<int, int>> genes_id_interval;
 
-    auto sequences = file_reader.get_sequences();
-    auto genome_sequencesid = file_reader.get_genome_sequencesid();
-    auto genes_id_interval = file_reader.get_genes_id_interval();
+    try {
+        PangeneIData file_reader = PangeneIData(filename, &log_stream);
+        file_reader.close();
+
+        sequences = file_reader.get_sequences();
+        genome_sequencesid = file_reader.get_genome_sequencesid();
+        genes_id_interval = file_reader.get_genes_id_interval();
+
+    } catch(std::exception const& e) {
+        log_stream << "Exception: " << e.what() << "\n";
+        exit(11);
+    }
 
     /*** Check kvalue ***/
-    Kvalue define_kvalue = Kvalue(&sequences, filename, sequences_type, output, log, &log_stream);
-    int kmer_size = define_kvalue.get_kmer_size();
+    int kmer_size = 0;
+
+    try {
+        Kvalue define_kvalue = Kvalue(sequences, filename, sequences_type, output, log, &log_stream);
+        kmer_size = define_kvalue.get_kmer_size();
+
+    } catch(std::exception const& e) {
+        log_stream << "Exception: " << e.what() << "\n";
+        exit(11);
+    }
+
 
     /*** Prefiltering ***/
     std::vector<std::pair<int, int>> pre_filter_candidate_sequences;
@@ -74,6 +93,7 @@ int main(int argc, char* argv[]){
         log_stream << "Exception: " << e.what() << "\n";
         exit(11);
     }
+
 
     /*** BestHits ***/
     std::unordered_map<int, std::unordered_map<int, double>> best_hits;
@@ -111,7 +131,7 @@ int main(int argc, char* argv[]){
     std::vector<std::tuple<int, int, double>> paralogues_best_hits;
     try {
             gettimeofday(&time,nullptr); paralogues_start = time.tv_sec+(time.tv_usec/1000000.0);
-        Paralogues paralogues = Paralogues(sequences, genome_sequencesid, genes_id_interval, sequences_type, kmer_size, bidirectional_best_hits, &log_stream);
+        Paralogues paralogues = Paralogues(sequences, genome_sequencesid, genes_id_interval, bidirectional_best_hits, sequences_type, kmer_size, &log_stream);
         paralogues.find_paralogues();
         paralogues_best_hits = paralogues.get_paralogues_best_hits();
             gettimeofday(&time,nullptr); paralogues_end = time.tv_sec+(time.tv_usec/1000000.0);

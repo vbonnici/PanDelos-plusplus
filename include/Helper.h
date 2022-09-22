@@ -105,7 +105,7 @@ namespace Helper {
         ostr << std::get<0>(_tuple) << delimiter.c_str() << std::get<1>(_tuple) << delimiter.c_str() << std::get<2>(_tuple) << std::endl;
     }
 
-    std::string aminoacid_to_nucleotides(std::string& aminoacid) {
+    std::string aminoacid_to_nucleotides(const std::string& aminoacid) {
         std::string kmer;
 
         for(int a = 0; a < aminoacid.length(); ++a) {

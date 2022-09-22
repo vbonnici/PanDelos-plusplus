@@ -9,8 +9,8 @@
 
 class BestHits {
 public:
-    explicit BestHits(std::unordered_map<int, std::unordered_map<int, double>>& input_sequences,
-                      std::vector<std::pair<int, int>>& genes_id_interval,
+    explicit BestHits(const std::unordered_map<int, std::unordered_map<int, double>>& input_sequences,
+                      const std::vector<std::pair<int, int>>& genes_id_interval,
                       std::ofstream* log_stream) {
 
         if(log_stream->bad())
@@ -54,7 +54,7 @@ public:
         }
     }
 
-    std::unordered_map<int, std::unordered_map<int, double>>& get_best_hits() {
+    const std::unordered_map<int, std::unordered_map<int, double>>& get_best_hits() {
         if(this->best_hits.empty())
             throw std::runtime_error("best_hits map is empty");
 
@@ -63,9 +63,9 @@ public:
 
 private:
     std::ofstream* log_stream;
-    std::unordered_map<int, std::unordered_map<int, double>>* input_sequences;
+    const std::unordered_map<int, std::unordered_map<int, double>>* input_sequences;
+    const std::vector<std::pair<int, int>>* genes_id_interval;
     std::unordered_map<int, std::unordered_map<int, double>> best_hits;
-    std::vector<std::pair<int, int>>* genes_id_interval;
 
 };
 #endif //PANDELOS_PLUSPLUS_BESTHITS_H

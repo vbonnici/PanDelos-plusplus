@@ -31,7 +31,12 @@ public:
      */
     explicit PangeneIData(const char* filename, std::ofstream* log_stream) {
         this->log_stream = log_stream;
-        this->open_file(filename);
+
+        try {
+            this->open_file(filename);
+        } catch(std::exception const& e) {
+            throw e;
+        }
 
         bool nameline = true;
         std::string genome_name, sequence_name, sequence_description;
@@ -229,8 +234,7 @@ private:
                 throw std::runtime_error("size fread != filesize");
 
         } catch(std::exception const& e) {
-            *this->log_stream << "Exception: " << e.what() << "\n";
-            exit(11);
+            throw e;
         }
 
         //*this->log_stream << buffer << "\n";

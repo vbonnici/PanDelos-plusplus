@@ -11,7 +11,7 @@
 
 class BidirectionalBestHits {
 public:
-    explicit BidirectionalBestHits(std::unordered_map<int, std::unordered_map<int, double>> &best_hits, std::ofstream* log_stream) {
+    explicit BidirectionalBestHits(const std::unordered_map<int, std::unordered_map<int, double>>& best_hits, std::ofstream* log_stream) {
         if(log_stream->bad())
             throw std::runtime_error("the log stream's badbit error state flag is set");
 
@@ -61,7 +61,7 @@ public:
         }
     }
 
-    std::vector<std::tuple<int, int, double>>& get_bidirectional_best_hits() {
+    const std::vector<std::tuple<int, int, double>>& get_bidirectional_best_hits() {
         if(this->bidirectional_best_hits.empty())
             throw std::runtime_error("bidirectional best hits vector is empty");
 
@@ -70,7 +70,7 @@ public:
 
 private:
     std::ofstream* log_stream;
-    std::unordered_map<int, std::unordered_map<int, double>>* best_hits;
+    const std::unordered_map<int, std::unordered_map<int, double>>* best_hits;
     std::vector<std::tuple<int, int, double>> bidirectional_best_hits;
 
 };

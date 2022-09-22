@@ -14,12 +14,12 @@
 
 class Paralogues {
 public:
-    explicit Paralogues(std::vector<std::string> input_sequences,
-                        std::vector<std::vector<int>>& genome_sequencesid,
-                        std::vector<std::pair<int, int>>& genes_id_interval,
+    explicit Paralogues(const std::vector<std::string> input_sequences,
+                        const std::vector<std::vector<int>> genome_sequencesid,
+                        const std::vector<std::pair<int, int>>& genes_id_interval,
+                        const std::vector<std::tuple<int, int, double>>& bidirectional_best_hits,
                         const int sequences_type,
-                        int kmer_size,
-                        std::vector<std::tuple<int, int, double>>& bidirectional_best_hits,
+                        const int kmer_size,
                         std::ofstream* log_stream) : sequences_type(sequences_type), kmer_size(kmer_size) {
 
         if(log_stream->bad())
@@ -31,14 +31,17 @@ public:
         if(genome_sequencesid.empty())
             throw std::runtime_error("genome sequencesid vector is empty");
 
+        if(genes_id_interval.empty())
+            throw std::runtime_error("genes id interval vector is empty");
+
         if(bidirectional_best_hits.empty())
             throw std::runtime_error("bidirectional best hits vector is empty");
 
         this->log_stream = log_stream;
-        this->input_sequences = std::move(input_sequences);
+        this->input_sequences = input_sequences;
         this->genome_sequencesid = genome_sequencesid;
-        this->bidirectional_best_hits = &bidirectional_best_hits;
         this->genes_id_interval = &genes_id_interval;
+        this->bidirectional_best_hits = &bidirectional_best_hits;
         this->genome_counter = this->genome_sequencesid.size();
     }
 
@@ -51,7 +54,7 @@ public:
         this->find_paralogues_best_hits();
     }
 
-    std::vector<std::tuple<int, int, double>>& get_paralogues_best_hits() {
+    const std::vector<std::tuple<int, int, double>>& get_paralogues_best_hits() {
         if(this->paralogues_best_hits.empty())
             throw std::runtime_error("paralogues best hits vector is empty");
 
@@ -60,15 +63,15 @@ public:
 
 private:
     std::ofstream* log_stream;
-    int kmer_size;
     const int sequences_type;
+    const int kmer_size;
     int genome_counter;
-    std::vector<std::vector<int>> genome_sequencesid;
-    std::vector<double> genome_minimum_jaccard;
     std::vector<std::string> input_sequences;
-    std::vector<std::tuple<int, int, double>>* bidirectional_best_hits;
+    std::vector<std::vector<int>> genome_sequencesid;
+    const std::vector<std::pair<int, int>>* genes_id_interval;
+    const std::vector<std::tuple<int, int, double>>* bidirectional_best_hits;
+    std::vector<double> genome_minimum_jaccard;
     std::vector<std::tuple<int, int, double>> paralogues_best_hits;
-    std::vector<std::pair<int, int>>* genes_id_interval;
 
 
     void calculate_minimum_jaccard() {
@@ -135,9 +138,9 @@ private:
         }
     }
 
-     bool check_constraint(int gene_id_a, int gene_id_b) {
-        std::string sequence_a = this->input_sequences.operator[](gene_id_a);
-        std::string sequence_b = this->input_sequences.operator[](gene_id_b);
+     [[nodiscard]] bool check_constraint(const int gene_id_a, const int gene_id_b) const {
+        const std::string sequence_a = this->input_sequences.operator[](gene_id_a);
+        const std::string sequence_b = this->input_sequences.operator[](gene_id_b);
 
          if(sequence_a.length() >= sequence_b.length()*2 || sequence_b.length() >= sequence_a.length()*2)
             return false;

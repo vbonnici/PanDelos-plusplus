@@ -16,8 +16,8 @@
 
 class Homologues {
 public:
-    explicit Homologues(const std::vector<std::string> &input_sequences,
-                        const std::vector<std::pair<int, int>> &gene_pair_input,
+    explicit Homologues(const std::vector<std::string>& input_sequences,
+                        const std::vector<std::pair<int, int>>& gene_pair_input,
                         const int sequences_type,
                         const int kmer_size,
                         std::ofstream* log_stream) : sequences_type(sequences_type), kmer_size(kmer_size){
@@ -40,7 +40,7 @@ public:
         this->calculate_kmer_multiplicity();
     }
 
-    void find_candidate_sequences(double jaccard_threshold = 0.0) {
+    void find_candidate_sequences(const double jaccard_threshold = 0.0) {
         int id_gene_a;
         int id_gene_b;
         unsigned int value_a;
@@ -118,21 +118,21 @@ public:
         }
     }
 
-    std::vector<int>& get_sequences_id() {
+    const std::vector<int>& get_sequences_id() {
         if(this->sequences_id.empty())
             throw std::runtime_error("sequences id vector is empty");
 
         return this->sequences_id;
     }
 
-    std::unordered_map<int, std::map<std::bitset<kvalue>, int, Helper::bitset_comparer<kvalue>>>& get_sequences_kmers() {
+    const std::unordered_map<int, std::map<std::bitset<kvalue>, int, Helper::bitset_comparer<kvalue>>>& get_sequences_kmers() {
         if(this->sequences_kmers.empty())
             throw std::runtime_error("sequences kmers vector is empty");
 
         return this->sequences_kmers;
     }
 
-    std::unordered_map<int, std::unordered_map<int, double>> get_candidate_sequences() {
+    const std::unordered_map<int, std::unordered_map<int, double>>& get_candidate_sequences() {
         if(this->candidate_sequences.empty())
             throw std::runtime_error("candidate sequences map is empty");
 
@@ -212,7 +212,7 @@ private:
             return str.length() == this->kmer_size && str.find_first_not_of("ACGT") == std::string::npos;
     }
 
-    static std::bitset<kvalue> kmer_to_bit(std::string& kmer) {
+    static std::bitset<kvalue> kmer_to_bit(const std::string& kmer) {
         std::bitset<kvalue> kmer_bit;
         kmer_bit.set(false);
         std::bitset<kvalue> A("00");
