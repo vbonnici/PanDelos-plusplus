@@ -12,10 +12,19 @@ public:
     explicit BestHits(std::unordered_map<int, std::unordered_map<int, double>>& input_sequences,
                       std::vector<std::pair<int, int>>& genes_id_interval,
                       std::ofstream* log_stream) {
-        this->input_sequences = &input_sequences;
-        this->genes_id_interval = &genes_id_interval;
+
+        if(log_stream->bad())
+            throw std::runtime_error("the log stream's badbit error state flag is set");
+
+        if(input_sequences.empty())
+            throw std::runtime_error("input sequences map is empty");
+
+        if(genes_id_interval.empty())
+            throw std::runtime_error("genome sequencesid vector is empty");
 
         this->log_stream = log_stream;
+        this->input_sequences = &input_sequences;
+        this->genes_id_interval = &genes_id_interval;
     }
 
     void find_best_hits() {
@@ -46,6 +55,9 @@ public:
     }
 
     std::unordered_map<int, std::unordered_map<int, double>>& get_best_hits() {
+        if(this->best_hits.empty())
+            throw std::runtime_error("best_hits map is empty");
+
         return this->best_hits;
     }
 

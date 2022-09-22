@@ -45,49 +45,82 @@ int main(int argc, char* argv[]){
     int kmer_size = define_kvalue.get_kmer_size();
 
     /*** Prefiltering ***/
-        gettimeofday(&time,nullptr); prefiltering_start = time.tv_sec+(time.tv_usec/1000000.0);
-    PreFilter pre_filter = PreFilter(sequences, genome_sequencesid, sequences_type, &log_stream);
-    pre_filter.init_sequences_kmers();
-    pre_filter.calculate_kmer_multiplicity();
-    pre_filter.find_candidate_sequences();
-    auto pre_filter_candidate_sequences = pre_filter.get_candidate_sequences();
-        gettimeofday(&time,nullptr); prefiltering_end = time.tv_sec+(time.tv_usec/1000000.0);
-    log_stream << "Prefilter phase completed in " << prefiltering_end-prefiltering_start << " seconds" << std::endl;
+    std::vector<std::pair<int, int>> pre_filter_candidate_sequences;
+    try {
+            gettimeofday(&time,nullptr); prefiltering_start = time.tv_sec+(time.tv_usec/1000000.0);
+        PreFilter pre_filter = PreFilter(sequences, genome_sequencesid, sequences_type, &log_stream);
+        pre_filter.find_candidate_sequences();
+        pre_filter_candidate_sequences = pre_filter.get_candidate_sequences();
+            gettimeofday(&time,nullptr); prefiltering_end = time.tv_sec+(time.tv_usec/1000000.0);
+        log_stream << "Prefilter phase completed in " << prefiltering_end-prefiltering_start << " seconds" << std::endl;
+
+    } catch(std::exception const& e) {
+        log_stream << "Exception: " << e.what() << "\n";
+        exit(11);
+    }
+
 
     /*** Homologues ***/
-        gettimeofday(&time,nullptr); homologues_start = time.tv_sec+(time.tv_usec/1000000.0);
-    Homologues homologues = Homologues(sequences, pre_filter_candidate_sequences, sequences_type, kmer_size, &log_stream);
-    homologues.init_sequences_kmers();
-    homologues.calculate_kmer_multiplicity();
-    homologues.find_candidate_sequences();
-    auto homologues_candidate_sequences = homologues.get_candidate_sequences();
-        gettimeofday(&time,nullptr); homologues_end = time.tv_sec+(time.tv_usec/1000000.0);
-    log_stream << "Homologues phase completed in " << homologues_end-homologues_start << " seconds" << std::endl;
+    std::unordered_map<int, std::unordered_map<int, double>> homologues_candidate_sequences;
+    try {
+            gettimeofday(&time,nullptr); homologues_start = time.tv_sec+(time.tv_usec/1000000.0);
+        Homologues homologues = Homologues(sequences, pre_filter_candidate_sequences, sequences_type, kmer_size, &log_stream);
+        homologues.find_candidate_sequences();
+        homologues_candidate_sequences = homologues.get_candidate_sequences();
+            gettimeofday(&time,nullptr); homologues_end = time.tv_sec+(time.tv_usec/1000000.0);
+        log_stream << "Homologues phase completed in " << homologues_end-homologues_start << " seconds" << std::endl;
+
+    } catch(std::exception const& e) {
+        log_stream << "Exception: " << e.what() << "\n";
+        exit(11);
+    }
 
     /*** BestHits ***/
-        gettimeofday(&time,nullptr); bh_start = time.tv_sec+(time.tv_usec/1000000.0);
-    BestHits bh = BestHits(homologues_candidate_sequences, genes_id_interval, &log_stream);
-    bh.find_best_hits();
-    auto best_hits = bh.get_best_hits();
-        gettimeofday(&time,nullptr); bh_end = time.tv_sec+(time.tv_usec/1000000.0);
-    log_stream << "Best Hits phase completed in " << bh_end-bh_start << " seconds" << std::endl;
+    std::unordered_map<int, std::unordered_map<int, double>> best_hits;
+    try {
+            gettimeofday(&time,nullptr); bh_start = time.tv_sec+(time.tv_usec/1000000.0);
+        BestHits bh = BestHits(homologues_candidate_sequences, genes_id_interval, &log_stream);
+        bh.find_best_hits();
+        best_hits = bh.get_best_hits();
+            gettimeofday(&time,nullptr); bh_end = time.tv_sec+(time.tv_usec/1000000.0);
+        log_stream << "Best Hits phase completed in " << bh_end-bh_start << " seconds" << std::endl;
+
+    } catch(std::exception const& e) {
+        log_stream << "Exception: " << e.what() << "\n";
+        exit(11);
+    }
 
 
     /*** BidirectionalBestHits ***/
-        gettimeofday(&time,nullptr); bbh_start = time.tv_sec+(time.tv_usec/1000000.0);
-    BidirectionalBestHits bbh = BidirectionalBestHits(best_hits, &log_stream);
-    bbh.find_bidirectional_best_hits();
-    auto bidirectional_best_hits = bbh.get_bidirectional_best_hits();
-        gettimeofday(&time,nullptr); bbh_end = time.tv_sec+(time.tv_usec/1000000.0);
-    log_stream << "Bidirectional Best Hits phase completed in " << bbh_end-bbh_start << " seconds" << std::endl;
+    std::vector<std::tuple<int, int, double>> bidirectional_best_hits;
+    try {
+            gettimeofday(&time,nullptr); bbh_start = time.tv_sec+(time.tv_usec/1000000.0);
+        BidirectionalBestHits bbh = BidirectionalBestHits(best_hits, &log_stream);
+        bbh.find_bidirectional_best_hits();
+        bidirectional_best_hits = bbh.get_bidirectional_best_hits();
+            gettimeofday(&time,nullptr); bbh_end = time.tv_sec+(time.tv_usec/1000000.0);
+        log_stream << "Bidirectional Best Hits phase completed in " << bbh_end-bbh_start << " seconds" << std::endl;
+
+    } catch(std::exception const& e) {
+        log_stream << "Exception: " << e.what() << "\n";
+        exit(11);
+    }
+
 
     /*** Paralogues ***/
-        gettimeofday(&time,nullptr); paralogues_start = time.tv_sec+(time.tv_usec/1000000.0);
-    Paralogues paralogues = Paralogues(sequences, genome_sequencesid, genes_id_interval, sequences_type, kmer_size, bidirectional_best_hits, &log_stream);
-    paralogues.find_paralogues();
-    auto paralogues_best_hits = paralogues.get_paralogues_best_hits();
-        gettimeofday(&time,nullptr); paralogues_end = time.tv_sec+(time.tv_usec/1000000.0);
-    log_stream << "Paralogues phase completed in " << paralogues_end-paralogues_start << " seconds" << std::endl;
+    std::vector<std::tuple<int, int, double>> paralogues_best_hits;
+    try {
+            gettimeofday(&time,nullptr); paralogues_start = time.tv_sec+(time.tv_usec/1000000.0);
+        Paralogues paralogues = Paralogues(sequences, genome_sequencesid, genes_id_interval, sequences_type, kmer_size, bidirectional_best_hits, &log_stream);
+        paralogues.find_paralogues();
+        paralogues_best_hits = paralogues.get_paralogues_best_hits();
+            gettimeofday(&time,nullptr); paralogues_end = time.tv_sec+(time.tv_usec/1000000.0);
+        log_stream << "Paralogues phase completed in " << paralogues_end-paralogues_start << " seconds" << std::endl;
+
+    } catch(std::exception const& e) {
+        log_stream << "Exception: " << e.what() << "\n";
+        exit(11);
+    }
 
 
     /*** Output ***/

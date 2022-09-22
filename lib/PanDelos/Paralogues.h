@@ -15,15 +15,27 @@
 class Paralogues {
 public:
     explicit Paralogues(std::vector<std::string> input_sequences,
-                     std::vector<std::vector<int>>& genome_sequencesid,
-                     std::vector<std::pair<int, int>>& genes_id_interval,
-                     const int sequences_type,
-                     int kmer_size,
-                     std::vector<std::tuple<int, int, double>>& bidirectional_best_hits,
-                     std::ofstream* log_stream) : sequences_type(sequences_type), kmer_size(kmer_size) {
+                        std::vector<std::vector<int>>& genome_sequencesid,
+                        std::vector<std::pair<int, int>>& genes_id_interval,
+                        const int sequences_type,
+                        int kmer_size,
+                        std::vector<std::tuple<int, int, double>>& bidirectional_best_hits,
+                        std::ofstream* log_stream) : sequences_type(sequences_type), kmer_size(kmer_size) {
+
+        if(log_stream->bad())
+            throw std::runtime_error("the log stream's badbit error state flag is set");
+
+        if(input_sequences.empty())
+            throw std::runtime_error("input sequences vector is empty");
+
+        if(genome_sequencesid.empty())
+            throw std::runtime_error("genome sequencesid vector is empty");
+
+        if(bidirectional_best_hits.empty())
+            throw std::runtime_error("bidirectional best hits vector is empty");
 
         this->log_stream = log_stream;
-        this->sequences = std::move(input_sequences);
+        this->input_sequences = std::move(input_sequences);
         this->genome_sequencesid = genome_sequencesid;
         this->bidirectional_best_hits = &bidirectional_best_hits;
         this->genes_id_interval = &genes_id_interval;
@@ -40,6 +52,9 @@ public:
     }
 
     std::vector<std::tuple<int, int, double>>& get_paralogues_best_hits() {
+        if(this->paralogues_best_hits.empty())
+            throw std::runtime_error("paralogues best hits vector is empty");
+
         return this->paralogues_best_hits;
     }
 
@@ -50,7 +65,7 @@ private:
     int genome_counter;
     std::vector<std::vector<int>> genome_sequencesid;
     std::vector<double> genome_minimum_jaccard;
-    std::vector<std::string> sequences;
+    std::vector<std::string> input_sequences;
     std::vector<std::tuple<int, int, double>>* bidirectional_best_hits;
     std::vector<std::tuple<int, int, double>> paralogues_best_hits;
     std::vector<std::pair<int, int>>* genes_id_interval;
@@ -92,19 +107,25 @@ private:
                         gene_id_pair.emplace_back(std::make_pair(a, b));
 
 
-            PreFilter pre_filter = PreFilter(this->sequences, this->genome_sequencesid, this->sequences_type, this->log_stream);
-            pre_filter.init_sequences_kmers();
-            pre_filter.calculate_kmer_multiplicity();
-            pre_filter.find_candidate_sequences(gene_id_pair, this->genome_minimum_jaccard.operator[](i));
-            auto pre_filter_candidate_sequences = pre_filter.get_candidate_sequences();
+            std::vector<std::pair<int, int>> pre_filter_candidate_sequences;
+            try {
+                PreFilter pre_filter = PreFilter(this->input_sequences, this->genome_sequencesid, this->sequences_type, this->log_stream);
+                pre_filter.find_candidate_sequences(gene_id_pair, this->genome_minimum_jaccard.operator[](i));
+                pre_filter_candidate_sequences = pre_filter.get_candidate_sequences();
+            } catch(std::exception const& e) {
+                throw e;
+            }
 
-            Homologues homologues = Homologues(this->sequences, pre_filter_candidate_sequences, this->sequences_type, this->kmer_size, this->log_stream);
+            std::unordered_map<int, std::unordered_map<int, double>> homologues_candidate_sequences;
+            try {
 
-            homologues.init_sequences_kmers();
-            homologues.calculate_kmer_multiplicity();
-            homologues.find_candidate_sequences(this->genome_minimum_jaccard.operator[](i));
+                Homologues homologues = Homologues(this->input_sequences, pre_filter_candidate_sequences, this->sequences_type, this->kmer_size, this->log_stream);
+                homologues.find_candidate_sequences(this->genome_minimum_jaccard.operator[](i));
+                homologues_candidate_sequences = homologues.get_candidate_sequences();
 
-            auto homologues_candidate_sequences = homologues.get_candidate_sequences();
+            } catch(std::exception const& e) {
+                throw e;
+            }
 
             for(auto &it : homologues_candidate_sequences)
                 for(auto &gene_b : it.second)
@@ -115,8 +136,8 @@ private:
     }
 
      bool check_constraint(int gene_id_a, int gene_id_b) {
-        std::string sequence_a = this->sequences.operator[](gene_id_a);
-        std::string sequence_b = this->sequences.operator[](gene_id_b);
+        std::string sequence_a = this->input_sequences.operator[](gene_id_a);
+        std::string sequence_b = this->input_sequences.operator[](gene_id_b);
 
          if(sequence_a.length() >= sequence_b.length()*2 || sequence_b.length() >= sequence_a.length()*2)
             return false;

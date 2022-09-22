@@ -24,30 +24,27 @@ double t1, t2, sum;
 class PreFilter {
 public:
 
-    explicit PreFilter(const std::vector<std::string>& sequences,
-                       const std::vector<std::vector<int>>& genome_sequencesid,
+    explicit PreFilter(const std::vector<std::string> &input_sequences,
+                       const std::vector<std::vector<int>> &genome_sequencesid,
                        const int sequences_type,
                        std::ofstream* log_stream) :
         jaccard_threshold(0.7), sequences_type(sequences_type), kmer_size(6) {
+
+        if(log_stream->bad())
+            throw std::runtime_error("the log stream's badbit error state flag is set");
+
+        if(input_sequences.empty())
+            throw std::runtime_error("input sequences vector is empty");
+
+        if(genome_sequencesid.empty())
+            throw std::runtime_error("genome sequencesid vector is empty");
+
         this->log_stream = log_stream;
-
-        this->sequences = &sequences;
+        this->input_sequences = &input_sequences;
         this->genome_sequencesid = &genome_sequencesid;
-    }
 
-    void init_sequences_kmers() {
-        for(int i = 0; i < this->sequences->size(); ++i) {
-            std::array<unsigned int, 4095> array{0};
-
-            this->sequences_kmers.emplace_back(array);
-        }
-    }
-
-    void calculate_kmer_multiplicity() {
-        if(this->sequences_type == 0)
-            this->calculate_kmer_multiplicity_aminoacids();
-        else
-            this->calculate_kmer_multiplicity_nucleotides();
+        this->init_sequences_kmers();
+        this->calculate_kmer_multiplicity();
     }
 
     void find_candidate_sequences(const std::vector<std::pair<int, int>>& gene_id_pair_in, double jaccard_threshold_in) {
@@ -67,8 +64,8 @@ public:
             #pragma omp for private(jaccard_similarity, counter_min, counter_max, sequence_a, sequence_b, value_a, value_b) schedule(static)
             for(auto &i : gene_id_pair_in) {
 
-                sequence_a = this->sequences->operator[](i.first);
-                sequence_b = this->sequences->operator[](i.second);
+                sequence_a = this->input_sequences->operator[](i.first);
+                sequence_b = this->input_sequences->operator[](i.second);
 
                 counter_min = 0;
                 counter_max = 0;
@@ -135,8 +132,8 @@ public:
 
                 for(auto &geneid_a: genome_a)
                     for(auto &geneid_b : genome_b) {
-                        sequence_a = this->sequences->operator[](geneid_a);
-                        sequence_b = this->sequences->operator[](geneid_b);
+                        sequence_a = this->input_sequences->operator[](geneid_a);
+                        sequence_b = this->input_sequences->operator[](geneid_b);
 
                         counter_min = 0;
                         counter_max = 0;
@@ -182,10 +179,16 @@ public:
     }
 
     std::vector<std::array<unsigned int, 4095>>& get_sequences_kmers() {
+        if(this->sequences_kmers.empty())
+            throw std::runtime_error("sequences kmers vector is empty");
+
         return this->sequences_kmers;
     }
 
     std::vector<std::pair<int, int>>& get_candidate_sequences() {
+        if(this->candidate_sequences.empty())
+            throw std::runtime_error("candidate sequences vector is empty");
+
         return this->candidate_sequences;
     }
 
@@ -193,11 +196,69 @@ private:
     const double jaccard_threshold;
     const int sequences_type;
     const int kmer_size;
-    const std::vector<std::string>* sequences;
+    const std::vector<std::string>* input_sequences;
     const std::vector<std::vector<int>>* genome_sequencesid;
     std::vector<std::array<unsigned int, 4095>> sequences_kmers;
     std::vector<std::pair<int, int>> candidate_sequences;
     std::ofstream* log_stream;
+
+    void init_sequences_kmers() {
+        for(int i = 0; i < this->input_sequences->size(); ++i) {
+            std::array<unsigned int, 4095> array{0};
+
+            this->sequences_kmers.emplace_back(array);
+        }
+    }
+
+    void calculate_kmer_multiplicity() {
+        if(this->sequences_type == 0)
+            this->calculate_kmer_multiplicity_aminoacids();
+        else
+            this->calculate_kmer_multiplicity_nucleotides();
+    }
+
+    void calculate_kmer_multiplicity_nucleotides() {
+        std::string sequence;
+        std::string kmer;
+        int kmer_in_int;
+
+        #pragma omp parallel for private(sequence, kmer, kmer_in_int)
+        for(int k = 0; k < this->sequences_kmers.size(); ++k) {
+            sequence = this->input_sequences->operator[](k);
+
+            for(int window = 0; window < sequence.length() - this->kmer_size + 1; window++) {
+                kmer = sequence.substr(window, this->kmer_size);
+
+                if(this->kmer_is_valid(kmer)) {
+                    kmer_in_int = PreFilter::kmer_to_int(kmer);
+
+                    this->sequences_kmers.operator[](k).operator[](kmer_in_int) += 1;
+                }
+            }
+        }
+    }
+
+    void calculate_kmer_multiplicity_aminoacids() {
+        std::string sequence;
+        std::string aminoacid;
+        std::string kmer;
+        int kmer_in_int;
+
+        #pragma omp parallel for private(sequence, aminoacid, kmer, kmer_in_int)
+        for(int k = 0; k < this->sequences_kmers.size(); ++k) {
+            sequence = this->input_sequences->operator[](k);
+
+            for(int window = 0; window < sequence.length() - this->kmer_size + 1; window++) {
+                aminoacid = sequence.substr(window, 2);
+
+                kmer = Helper::aminoacid_to_nucleotides(aminoacid);
+
+                kmer_in_int = PreFilter::kmer_to_int(kmer);
+
+                this->sequences_kmers.operator[](k).operator[](kmer_in_int) += 1;
+            }
+        }
+    }
 
     [[nodiscard]] bool kmer_is_valid(const std::string &str) const {
         return str.length() == this->kmer_size && str.find_first_not_of("ACGT") == std::string::npos;
@@ -233,49 +294,6 @@ private:
             return false;
 
         return true;
-    }
-
-    void calculate_kmer_multiplicity_nucleotides() {
-        std::string sequence;
-        std::string kmer;
-        int kmer_in_int;
-
-        #pragma omp parallel for private(sequence, kmer, kmer_in_int)
-        for(int k = 0; k < this->sequences_kmers.size(); ++k) {
-            sequence = this->sequences->operator[](k);
-
-            for(int window = 0; window < sequence.length() - this->kmer_size + 1; window++) {
-                kmer = sequence.substr(window, this->kmer_size);
-
-                if(this->kmer_is_valid(kmer)) {
-                    kmer_in_int = PreFilter::kmer_to_int(kmer);
-
-                    this->sequences_kmers.operator[](k).operator[](kmer_in_int) += 1;
-                }
-            }
-        }
-    }
-
-    void calculate_kmer_multiplicity_aminoacids() {
-        std::string sequence;
-        std::string aminoacid;
-        std::string kmer;
-        int kmer_in_int;
-
-        #pragma omp parallel for private(sequence, aminoacid, kmer, kmer_in_int)
-        for(int k = 0; k < this->sequences_kmers.size(); ++k) {
-            sequence = this->sequences->operator[](k);
-
-            for(int window = 0; window < sequence.length() - this->kmer_size + 1; window++) {
-                aminoacid = sequence.substr(window, 2);
-
-                kmer = Helper::aminoacid_to_nucleotides(aminoacid);
-
-                kmer_in_int = PreFilter::kmer_to_int(kmer);
-
-                this->sequences_kmers.operator[](k).operator[](kmer_in_int) += 1;
-            }
-        }
     }
 };
 #endif //PANDELOS_PLUSPLUS_PREFILTER_H
