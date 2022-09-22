@@ -264,7 +264,7 @@ private:
         return str.length() == this->kmer_size && str.find_first_not_of("ACGT") == std::string::npos;
     }
 
-    static int kmer_to_int(std::string& kmer) {
+    static int kmer_to_int(const std::string& kmer) {
         int bitmap = 0;
         int A = 0b00;
         int C = 0b01;
@@ -289,7 +289,7 @@ private:
         return bitmap;
     }
 
-    static bool check_constraint(std::string& sequence_a, std::string& sequence_b) {
+    static bool check_constraint(const std::string& sequence_a, const std::string& sequence_b) {
         if(sequence_a.length() >= sequence_b.length()*2 || sequence_b.length() >= sequence_a.length()*2)
             return false;
 

@@ -68,4 +68,5 @@ private:
     std::unordered_map<int, std::unordered_map<int, double>> best_hits;
 
 };
+
 #endif //PANDELOS_PLUSPLUS_BESTHITS_H
