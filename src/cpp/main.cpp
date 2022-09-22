@@ -1,23 +1,23 @@
 #include <iostream>
 #include <string>
 #include "../../include/PangeneIData.h"
-#include "../../lib/PanDelos/Omologus.h"
+#include "../../lib/PanDelos/Homologues.h"
 #include "../../lib/PanDelos/BestHits.h"
 #include "../../lib/PanDelos/BidirectionalBestHits.h"
 #include "../../lib/PanDelos/PreFilter.h"
-#include "../../lib/PanDelos/Paralog.h"
+#include "../../lib/PanDelos/Paralogues.h"
 #include <sys/time.h>
 #include "../../include/Kvalue.h"
 #include "../../lib/Argparser/ArgParse.h"
 
 int main(int argc, char* argv[]){
     struct timeval time{};
-    double net_start, net_end;
+    double total_time_start, total_time_end;
     double prefiltering_start, prefiltering_end;
-    double omologus_start, omologus_end;
+    double homologues_start, homologues_end;
     double bh_start, bh_end;
     double bbh_start, bbh_end;
-    double paralog_start, paralog_end;
+    double paralogues_start, paralogues_end;
 
     /*** Argument parsing ***/
     ArgParser parser = ArgParser();
@@ -32,13 +32,13 @@ int main(int argc, char* argv[]){
     std::ofstream output_stream(output, std::ofstream::trunc);
 
     /*** File parsing ***/
-        gettimeofday(&time,nullptr); net_start = time.tv_sec+(time.tv_usec/1000000.0);
-    PangeneIData fire = PangeneIData(filename, &log_stream);
-    fire.close();
+        gettimeofday(&time,nullptr); total_time_start = time.tv_sec+(time.tv_usec/1000000.0);
+    PangeneIData file_reader = PangeneIData(filename, &log_stream);
+    file_reader.close();
 
-    auto sequences = fire.get_sequences();
-    auto genome_sequencesid = fire.get_genome_sequencesid();
-    auto genes_id_interval = fire.get_genes_id_interval();
+    auto sequences = file_reader.get_sequences();
+    auto genome_sequencesid = file_reader.get_genome_sequencesid();
+    auto genes_id_interval = file_reader.get_genes_id_interval();
 
     /*** Check kvalue ***/
     Kvalue define_kvalue = Kvalue(&sequences, filename, sequences_type, output, log, &log_stream);
@@ -46,67 +46,67 @@ int main(int argc, char* argv[]){
 
     /*** Prefiltering ***/
         gettimeofday(&time,nullptr); prefiltering_start = time.tv_sec+(time.tv_usec/1000000.0);
-    PreFilter filter = PreFilter(sequences, genome_sequencesid, sequences_type, &log_stream);
-    filter.init_sequences_kmers();
-    filter.calculate_kmer_multiplicity();
-    filter.calculate_best_hits();
-    auto prefilter_best_hits = filter.get_best_hits();
+    PreFilter pre_filter = PreFilter(sequences, genome_sequencesid, sequences_type, &log_stream);
+    pre_filter.init_sequences_kmers();
+    pre_filter.calculate_kmer_multiplicity();
+    pre_filter.find_candidate_sequences();
+    auto pre_filter_candidate_sequences = pre_filter.get_candidate_sequences();
         gettimeofday(&time,nullptr); prefiltering_end = time.tv_sec+(time.tv_usec/1000000.0);
     log_stream << "Prefilter phase completed in " << prefiltering_end-prefiltering_start << " seconds" << std::endl;
 
-    /*** Omologus ***/
-        gettimeofday(&time,nullptr); omologus_start = time.tv_sec+(time.tv_usec/1000000.0);
-    Omologus omologus = Omologus(sequences, prefilter_best_hits, sequences_type, kmer_size, &log_stream);
-    omologus.init_sequences_kmers();
-    omologus.calculate_kmer_multiplicity();
-    omologus.calculate_best_hits();
-    auto map_hits = omologus.get_map_hits();
-        gettimeofday(&time,nullptr); omologus_end = time.tv_sec+(time.tv_usec/1000000.0);
-    log_stream << "Omologus phase completed in " << omologus_end-omologus_start << " seconds" << std::endl;
+    /*** Homologues ***/
+        gettimeofday(&time,nullptr); homologues_start = time.tv_sec+(time.tv_usec/1000000.0);
+    Homologues homologues = Homologues(sequences, pre_filter_candidate_sequences, sequences_type, kmer_size, &log_stream);
+    homologues.init_sequences_kmers();
+    homologues.calculate_kmer_multiplicity();
+    homologues.find_candidate_sequences();
+    auto homologues_candidate_sequences = homologues.get_candidate_sequences();
+        gettimeofday(&time,nullptr); homologues_end = time.tv_sec+(time.tv_usec/1000000.0);
+    log_stream << "Homologues phase completed in " << homologues_end-homologues_start << " seconds" << std::endl;
 
     /*** BestHits ***/
         gettimeofday(&time,nullptr); bh_start = time.tv_sec+(time.tv_usec/1000000.0);
-    BestHits bh = BestHits(map_hits, genes_id_interval, &log_stream);
-    bh.compute_best_hits();
-    auto map_best_hits = bh.get_map_best_hits();
+    BestHits bh = BestHits(homologues_candidate_sequences, genes_id_interval, &log_stream);
+    bh.find_best_hits();
+    auto best_hits = bh.get_best_hits();
         gettimeofday(&time,nullptr); bh_end = time.tv_sec+(time.tv_usec/1000000.0);
-    log_stream << "Best Hits calculated in " << bh_end-bh_start << " seconds" << std::endl;
+    log_stream << "Best Hits phase completed in " << bh_end-bh_start << " seconds" << std::endl;
 
 
     /*** BidirectionalBestHits ***/
         gettimeofday(&time,nullptr); bbh_start = time.tv_sec+(time.tv_usec/1000000.0);
-    BidirectionalBestHits bbh = BidirectionalBestHits(map_best_hits, &log_stream);
-    bbh.calculate_bbh();
-    auto vector_tuple_bbh = bbh.get_vector_tuple_bbh();
+    BidirectionalBestHits bbh = BidirectionalBestHits(best_hits, &log_stream);
+    bbh.find_bidirectional_best_hits();
+    auto bidirectional_best_hits = bbh.get_bidirectional_best_hits();
         gettimeofday(&time,nullptr); bbh_end = time.tv_sec+(time.tv_usec/1000000.0);
-    log_stream << "Bidirectional Best Hits calculated in " << bbh_end-bbh_start << " seconds" << std::endl;
+    log_stream << "Bidirectional Best Hits phase completed in " << bbh_end-bbh_start << " seconds" << std::endl;
 
-    /*** Paralog ***/
-        gettimeofday(&time,nullptr); paralog_start = time.tv_sec+(time.tv_usec/1000000.0);
-    Paralog paralog = Paralog(sequences, genome_sequencesid, genes_id_interval, sequences_type, kmer_size, vector_tuple_bbh, &log_stream);
-    paralog.calculate_paralog();
-    auto paralog_best_hits = paralog.get_paralog_best_hits();
-        gettimeofday(&time,nullptr); paralog_end = time.tv_sec+(time.tv_usec/1000000.0);
-    log_stream << "Paralogs calculated in " << paralog_end-paralog_start << " seconds" << std::endl;
+    /*** Paralogues ***/
+        gettimeofday(&time,nullptr); paralogues_start = time.tv_sec+(time.tv_usec/1000000.0);
+    Paralogues paralogues = Paralogues(sequences, genome_sequencesid, genes_id_interval, sequences_type, kmer_size, bidirectional_best_hits, &log_stream);
+    paralogues.find_paralogues();
+    auto paralogues_best_hits = paralogues.get_paralogues_best_hits();
+        gettimeofday(&time,nullptr); paralogues_end = time.tv_sec+(time.tv_usec/1000000.0);
+    log_stream << "Paralogues phase completed in " << paralogues_end-paralogues_start << " seconds" << std::endl;
 
 
     /*** Output ***/
     //output_stream << "Orthologues " << std::endl;
 
-    for(auto &i : vector_tuple_bbh)
+    for(auto &i : bidirectional_best_hits)
         Helper::simple_triple_print<int, int, double>(output_stream, i, "\t");
 
     //output_stream << "Paralogues: " << std::endl;
 
-    for(auto &i : paralog_best_hits)
+    for(auto &i : paralogues_best_hits)
         Helper::simple_triple_print<int, int, double>(output_stream, i, "\t");
 
 
     output_stream.close();
 
-        gettimeofday(&time,nullptr); net_end = time.tv_sec+(time.tv_usec/1000000.0);
+        gettimeofday(&time,nullptr); total_time_end = time.tv_sec+(time.tv_usec/1000000.0);
 
-    log_stream << "Computation time net of preliminary operations: " << net_end-net_start << " seconds" << std::endl;
+    log_stream << "Computation time net of preliminary operations: " << total_time_end-total_time_start << " seconds" << std::endl;
 
     return 0;
 };

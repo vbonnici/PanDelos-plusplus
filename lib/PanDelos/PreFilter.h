@@ -50,7 +50,7 @@ public:
             this->calculate_kmer_multiplicity_nucleotides();
     }
 
-    void calculate_best_hits(const std::vector<std::pair<int, int>>& gene_id_pair_in, double jaccard_threshold_in) {
+    void find_candidate_sequences(const std::vector<std::pair<int, int>>& gene_id_pair_in, double jaccard_threshold_in) {
         unsigned int value_a;
         unsigned int value_b;
         unsigned int counter_min;
@@ -63,7 +63,7 @@ public:
 
         #pragma omp parallel
         {
-            std::vector<std::pair<int, int>> best_hits_local;
+            std::vector<std::pair<int, int>> candidate_sequences_local;
             #pragma omp for private(jaccard_similarity, counter_min, counter_max, sequence_a, sequence_b, value_a, value_b) schedule(static)
             for(auto &i : gene_id_pair_in) {
 
@@ -97,20 +97,20 @@ public:
                 jaccard_similarity = (double) counter_min / counter_max;
 
                 if (counter_max > 0 && jaccard_similarity > jaccard_threshold_in)
-                    best_hits_local.emplace_back(std::make_pair(i.first, i.second));
+                    candidate_sequences_local.emplace_back(std::make_pair(i.first, i.second));
             }
 
             for (int t = 0; t < omp_get_num_threads(); t++) {
                 #pragma omp barrier
                 if (t == omp_get_thread_num()) {
-                    this->best_hits.insert(this->best_hits.end(), std::make_move_iterator(best_hits_local.begin()), std::make_move_iterator(best_hits_local.end()));
+                    this->candidate_sequences.insert(this->candidate_sequences.end(), std::make_move_iterator(candidate_sequences_local.begin()), std::make_move_iterator(candidate_sequences_local.end()));
                 }
             }
         };
 
     }
     
-    void calculate_best_hits() {
+    void find_candidate_sequences() {
         unsigned int value_a;
         unsigned int value_b;
         unsigned int counter_min;
@@ -130,7 +130,7 @@ public:
             #pragma omp parallel for shared(genome_a) private(jaccard_similarity, counter_min, counter_max, sequence_a, sequence_b, value_a, value_b)
             for(i = index + 1; i < this->genome_sequencesid->size(); i++) {
 
-                std::vector<std::pair<int, int>> best_hits_local;
+                std::vector<std::pair<int, int>> candidate_sequences_local;
                 std::vector<int> genome_b = this->genome_sequencesid->operator[](i);
 
                 for(auto &geneid_a: genome_a)
@@ -165,11 +165,11 @@ public:
                         jaccard_similarity = (double) counter_min / counter_max;
 
                         if (counter_max > 0 && jaccard_similarity > this->jaccard_threshold)
-                            best_hits_local.emplace_back(std::make_pair(geneid_a, geneid_b));
+                            candidate_sequences_local.emplace_back(std::make_pair(geneid_a, geneid_b));
                     }
 
                 #pragma omp critical
-                this->best_hits.insert(this->best_hits.end(), std::make_move_iterator(best_hits_local.begin()), std::make_move_iterator(best_hits_local.end()));
+                this->candidate_sequences.insert(this->candidate_sequences.end(), std::make_move_iterator(candidate_sequences_local.begin()), std::make_move_iterator(candidate_sequences_local.end()));
 
             }
 
@@ -177,7 +177,7 @@ public:
             sum = (t2-t1);
 
             //*this->log_stream << "Genome computation time " << index << " with other genomes " << sum << std::endl;
-            //*this->log_stream << "Best hits in array: " << this->best_hits.size() << std::endl;
+            //*this->log_stream << "Candidate sequences in array: " << this->candidate_sequences.size() << std::endl;
         }
     }
 
@@ -185,8 +185,8 @@ public:
         return this->sequences_kmers;
     }
 
-    std::vector<std::pair<int, int>>& get_best_hits() {
-        return this->best_hits;
+    std::vector<std::pair<int, int>>& get_candidate_sequences() {
+        return this->candidate_sequences;
     }
 
 private:
@@ -196,7 +196,7 @@ private:
     const std::vector<std::string>* sequences;
     const std::vector<std::vector<int>>* genome_sequencesid;
     std::vector<std::array<unsigned int, 4095>> sequences_kmers;
-    std::vector<std::pair<int, int>> best_hits;
+    std::vector<std::pair<int, int>> candidate_sequences;
     std::ofstream* log_stream;
 
     [[nodiscard]] bool kmer_is_valid(const std::string &str) const {

@@ -26,7 +26,7 @@ public:
             for(char a : i)
                 this->alphabet.insert(a);
 
-        *this->log_stream << "Calculated alphabet: " << std::endl;
+        *this->log_stream << "Identified alphabet: " << std::endl;
 
         for(auto &i : this->alphabet)
             *this->log_stream << i << " ";
@@ -65,7 +65,7 @@ private:
         int kvalue_size_expected;
 
         if(sequences_type == 0)
-            kvalue_size_expected = this->kmer_size*3*2; //2 bit per ogni nucleotide
+            kvalue_size_expected = this->kmer_size*3*2; //2 bits for each nucleotide
         else
             kvalue_size_expected = this->kmer_size*2;
 
@@ -77,7 +77,7 @@ private:
             ofs = std::ofstream(cwd.string(), std::ofstream::trunc);
 
             if (!ofs) {
-                *this->log_stream << "errore apertura file" << std::endl;
+                *this->log_stream << "file opening error" << std::endl;
                 exit(11);
             }
 

@@ -1,5 +1,5 @@
-#ifndef PANDELOS_PLUSPLUS_OMOLOGUSv2_H
-#define PANDELOS_PLUSPLUS_OMOLOGUSv2_H
+#ifndef PANDELOS_PLUSPLUS_HOMOLOGUES
+#define PANDELOS_PLUSPLUS_HOMOLOGUES
 
 #include <iostream>
 #include <string>
@@ -14,9 +14,9 @@
 #include <omp.h>
 #include "../../include/Helper.h"
 
-class Omologus {
+class Homologues {
 public:
-    explicit Omologus(const std::vector<std::string>&sequences,
+    explicit Homologues(const std::vector<std::string>&sequences,
                       const std::vector<std::pair<int, int>>&gene_pair_input,
                       const int sequences_type,
                       const int kmer_size,
@@ -24,7 +24,7 @@ public:
 
         this->log_stream = log_stream;
         this->gene_pair = &gene_pair_input;
-        this->sequences_prefilter = &sequences;
+        this->input_sequences = &sequences;
 
         this->collect_sequences_id_from_gene_pair(&gene_pair_input);
     }
@@ -48,7 +48,7 @@ public:
     void calculate_kmer_multiplicity() {
         std::string kmer;
         for(auto &i : this->sequences_kmers) {
-            std::string sequence = this->sequences_prefilter->operator[](i.first);
+            std::string sequence = this->input_sequences->operator[](i.first);
 
             for(int window = 0; window < sequence.length(); ++window) {
                 if(this->sequences_type == 1)
@@ -72,7 +72,7 @@ public:
         }
     }
 
-    void calculate_best_hits(double jaccard_threshold = 0.0) {
+    void find_candidate_sequences(double jaccard_threshold = 0.0) {
         int id_gene_a;
         int id_gene_b;
         unsigned int value_a;
@@ -82,8 +82,8 @@ public:
         double jaccard_similarity;
 
         for (auto &i: *this->gene_pair) {
-            this->map_hits.insert(std::make_pair(i.first, std::unordered_map<int, double>()));
-            this->map_hits.insert(std::make_pair(i.second, std::unordered_map<int, double>()));
+            this->candidate_sequences.insert(std::make_pair(i.first, std::unordered_map<int, double>()));
+            this->candidate_sequences.insert(std::make_pair(i.second, std::unordered_map<int, double>()));
         }
 
         omp_set_num_threads(omp_get_num_procs());
@@ -136,13 +136,13 @@ public:
             jaccard_similarity = (double) counter_min / counter_max;
 
             if (counter_max > 0 && jaccard_similarity >= jaccard_threshold) {
-                auto result_a = this->map_hits.find(id_gene_a);
+                auto result_a = this->candidate_sequences.find(id_gene_a);
 
                 #pragma omp critical
                 result_a->second.insert(std::make_pair(id_gene_b, jaccard_similarity));
 
 
-                auto result_b = this->map_hits.find(id_gene_b);
+                auto result_b = this->candidate_sequences.find(id_gene_b);
 
                 #pragma omp critical
                 result_b->second.insert(std::make_pair(id_gene_a, jaccard_similarity));
@@ -158,13 +158,10 @@ public:
         return this->sequences_kmers;
     }
 
-    std::unordered_map<int, std::unordered_map<int, double>> get_map_hits() {
-        return this->map_hits;
+    std::unordered_map<int, std::unordered_map<int, double>> get_candidate_sequences() {
+        return this->candidate_sequences;
     }
 
-    std::vector<std::tuple<int, int, double>>& get_vector_tuple_bbh() {
-        return this->vector_tuple_bbh;
-    }
 
 private:
     std::ofstream* log_stream;
@@ -173,10 +170,9 @@ private:
     std::vector<int> sequences_id;
     std::unordered_map<int, std::map<std::bitset<kvalue>, int, Helper::bitset_comparer<kvalue>>> sequences_kmers;   //map<sequence_id - map<kmer, contatore>>
 
-    const std::vector<std::string>* sequences_prefilter;
+    const std::vector<std::string>* input_sequences;
     const std::vector<std::pair<int, int>>* gene_pair;
-    std::unordered_map<int, std::unordered_map<int, double>> map_hits;
-    std::vector<std::tuple<int, int, double>> vector_tuple_bbh;
+    std::unordered_map<int, std::unordered_map<int, double>> candidate_sequences;
 
     [[nodiscard]] bool kmer_is_valid(const std::string &str) const {
         if(this->sequences_type == 0)
@@ -226,4 +222,4 @@ private:
         this->sequences_id.assign(temp_sequences.begin(), temp_sequences.end());
     }
 };
-#endif //PANDELOS_PLUSPLUS_OMOLOGUSv2_H
+#endif //PANDELOS_PLUSPLUS_HOMOLOGUES
