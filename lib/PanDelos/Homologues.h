@@ -133,9 +133,6 @@ public:
     }
 
     const std::unordered_map<int, std::unordered_map<int, double>>& get_candidate_sequences() {
-        if(this->candidate_sequences.empty())
-            throw std::runtime_error("candidate sequences map is empty");
-
         return this->candidate_sequences;
     }
 

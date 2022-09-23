@@ -55,9 +55,6 @@ public:
     }
 
     const std::vector<std::tuple<int, int, double>>& get_paralogues_best_hits() {
-        if(this->paralogues_best_hits.empty())
-            throw std::runtime_error("paralogues best hits vector is empty");
-
         return this->paralogues_best_hits;
     }
 
@@ -109,30 +106,34 @@ private:
                     if(this->check_constraint(a, b))
                         gene_id_pair.emplace_back(std::make_pair(a, b));
 
-
             std::vector<std::pair<int, int>> pre_filter_candidate_sequences;
             try {
                 PreFilter pre_filter = PreFilter(this->input_sequences, this->genome_sequencesid, this->sequences_type, this->log_stream);
                 pre_filter.find_candidate_sequences(gene_id_pair, this->genome_minimum_jaccard.operator[](i));
                 pre_filter_candidate_sequences = pre_filter.get_candidate_sequences();
+
             } catch(std::exception const& e) {
-                throw e;
+                *this->log_stream << "Exception: " << e.what() << std::endl;
+                exit(11);
             }
 
             std::unordered_map<int, std::unordered_map<int, double>> homologues_candidate_sequences;
-            try {
+            if(!pre_filter_candidate_sequences.empty()) {
+                try {
+                    Homologues homologues = Homologues(this->input_sequences, pre_filter_candidate_sequences,
+                                                       this->sequences_type, this->kmer_size, this->log_stream);
+                    homologues.find_candidate_sequences(this->genome_minimum_jaccard.operator[](i));
+                    homologues_candidate_sequences = homologues.get_candidate_sequences();
 
-                Homologues homologues = Homologues(this->input_sequences, pre_filter_candidate_sequences, this->sequences_type, this->kmer_size, this->log_stream);
-                homologues.find_candidate_sequences(this->genome_minimum_jaccard.operator[](i));
-                homologues_candidate_sequences = homologues.get_candidate_sequences();
+                } catch (std::exception const &e) {
+                    *this->log_stream << "Exception: " << e.what() << std::endl;
+                    exit(11);
+                }
 
-            } catch(std::exception const& e) {
-                throw e;
+                for(auto &it : homologues_candidate_sequences)
+                    for(auto &gene_b : it.second)
+                        this->paralogues_best_hits.emplace_back(std::make_tuple(it.first, gene_b.first, gene_b.second));
             }
-
-            for(auto &it : homologues_candidate_sequences)
-                for(auto &gene_b : it.second)
-                    this->paralogues_best_hits.emplace_back(std::make_tuple(it.first, gene_b.first, gene_b.second));
 
             gene_id_pair.clear();
         }

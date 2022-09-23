@@ -121,9 +121,9 @@ public:
                 }
             }
         };
-
     }
-    
+
+    ///TODO: Deprecated
     void find_candidate_sequences() {
         unsigned int value_a;
         unsigned int value_b;
@@ -203,9 +203,6 @@ public:
     }
 
     const std::vector<std::pair<int, int>>& get_candidate_sequences() {
-        if(this->candidate_sequences.empty())
-            throw std::runtime_error("candidate sequences vector is empty");
-
         return this->candidate_sequences;
     }
 
