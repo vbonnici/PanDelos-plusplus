@@ -70,7 +70,6 @@ int main(int argc, char* argv[]){
         PreFilter pre_filter = PreFilter(sequences, genome_sequencesid, sequences_type, &log_stream);
         std::vector<std::pair<int, int>> gene_pair_in;
         pre_filter.find_candidate_sequences(gene_pair_in);
-        //pre_filter.find_candidate_sequences();
         pre_filter_candidate_sequences = pre_filter.get_candidate_sequences();
             gettimeofday(&time,nullptr); prefiltering_end = time.tv_sec+(time.tv_usec/1000000.0);
         log_stream << "Prefilter phase completed in " << prefiltering_end-prefiltering_start << " seconds" << std::endl;
