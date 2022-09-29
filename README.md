@@ -7,7 +7,7 @@ PanDelos plus plus: a dictionary-based method for pan-genome content discovery
 
 ## Briefly description
 
-***PanDelos plus plus*** is used for the discovery of the pangenomic content in the population of bacteria with a type of approach without alignment and based on the analysis of the multiplicity of k-mer.
+**PanDelos plus plus** is used for the discovery of the pangenomic content in the population of bacteria with a type of approach without alignment and based on the analysis of the multiplicity of k-mer.
 It is a natively scalable methodology, whose algorithms are executed in parallel with OpenMP.
 ----
 
@@ -134,6 +134,7 @@ You are free to link or use PanDelos plus plus inside source code of your own pr
 
 <hr />
 
+<!--
 ## Detailed description
 
 The following picture gives a detailed description of the PanDelos plus plus workflow.
