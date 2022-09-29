@@ -52,24 +52,52 @@ parser argparser {
         }
 };
 
+/*
+ * A class that acts as a utility for parsing the options needed to run the program.
+ *
+ * Use the open source library https://github.com/p-ranav/argparse
+ */
 class ArgParser {
 public:
+    /*
+     * Entry point of the class that calls a private method that takes care of the parsing
+     */
     void parse_arguments(int argc, char* argv[]) {
         this->do_args_parsing(argc, argv);
     }
 
+    /*
+     * Getter which returns the name of the input file
+     *
+     * @param[out] const char*
+     */
     const char* get_filename() {
         return this->filename;
     }
 
+    /*
+     * Getter which returns the type of sequence
+     *
+     * @param[out] int
+     */
     [[nodiscard]] int get_sequences_type() const {
         return this->sequences_type;
     }
 
+    /*
+     * Getter which returns the name of the output file
+     *
+     * @param[out] std::string
+     */
     std::string get_output() {
         return this->output;
     }
 
+    /*
+     * Getter which returns the name of the log file
+     *
+     * @param[out] std::string
+     */
     std::string get_log() {
         return this->log;
     }
@@ -80,6 +108,9 @@ private:
     std::string output;
     std::string log;
 
+    /*
+     * Private method that takes care of parsing options
+     */
     void do_args_parsing(int argc, char* argv[]) {
 
         argagg::parser_results args;

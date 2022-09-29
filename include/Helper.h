@@ -11,8 +11,25 @@
 #include <unordered_set>
 #include <algorithm>
 
+/*
+ * Namespace that contains software utility functions and template functions
+ */
 namespace Helper {
 
+    /*
+     * Templatic function that allows you to combine two maps into a single map which have the key of the same type.
+     *
+     * Preserving the keys and values of both
+     *
+     * @tparam KeyType type of key
+     * @tparam LeftValue type of value of first map
+     * @tparam RightValue type of value of second map
+     *
+     * @param[in] const std::map<KeyType, LeftValue>&
+     * @param[in] const std::map<KeyType, RightValue>&
+     *
+     * @param[out] std::map<KeyType, std::pair<LeftValue, RightValue>>
+     */
     template <typename KeyType, typename LeftValue, typename RightValue>
     std::map<KeyType, std::pair<LeftValue, RightValue>>
     UnionMaps(const std::map<KeyType, LeftValue>& map1, const std::map<KeyType, RightValue>& map2) {
@@ -48,6 +65,9 @@ namespace Helper {
         return result;
     }
 
+    /*
+     * Comparison function necessary for the std::map data structure to store new bitsets
+     */
     template<size_t sz> struct bitset_comparer {
         bool operator() (const std::bitset<sz> &b1, const std::bitset<sz> &b2) const {
             return b1.to_ulong() < b2.to_ulong();
@@ -71,6 +91,17 @@ namespace Helper {
         std::copy(itbegin, itend, std::ostream_iterator<T>(ostr, delimiter.c_str()));
     }
 
+    /*
+    * Template function that allows you to print on std::ostream an unordered map
+    * (start and end).
+    *
+    * @tparam map_key type of key
+    * @tparam map_val type of value of map
+    *
+    * @param[in] std::ostream&
+    * @param[in] const std::unordered_map<map_key, map_val>&
+    * @param[in] const std::string&
+    */
     template<typename map_key, typename map_val>
     void simple_unordered_map_print(std::ostream& ostr, const std::unordered_map<map_key, map_val>& _map, const std::string& delimiter) {
         for (const auto& item : _map)

@@ -23,10 +23,22 @@
 struct timeval chrono{};
 double t1, t2, sum;
 
-
+/*
+ * Class that performs a filtering of sequences, calculating a similarity between gene sequences that respect thresholds
+ * chosen not empirically
+ */
 class PreFilter {
 public:
 
+    /*
+     * The constructor constructs the adequate data structures in order to proceed with the analysis and takes care of
+     * calling the methods that enumerate the k-mer and calculate the multiplicities
+     *
+     * @param[in] const std::vector<std::string>&
+     * @param[in] const std::vector<std::vector<int>>&
+     * @param[in] const int
+     * @param[in] std::ofstream*
+     */
     explicit PreFilter(const std::vector<std::string>& input_sequences,
                        const std::vector<std::vector<int>>& genome_sequencesid,
                        const int sequences_type,
@@ -50,6 +62,18 @@ public:
         this->calculate_kmer_multiplicity();
     }
 
+    /*
+     * Main method of the class that deals with finding candidate sequences to be homologous.
+     *
+     * By default, the comparison takes place between pairs of genes belonging to pairs of genomes that you want to compare.
+     * However, it is possible to specify a set of gene pairs constructed in some other way.
+     *
+     * The prefiltering phase consists, in parallel, of comparing the multiplicity of k-mer for pairs of genomes
+     * in order to calculate the Jaccard similarity index, which establishes the similarity between two genes.
+     *
+     * @param[in] std::vector<std::pair<int, int>>&
+     * @param[in] double
+     */
     void find_candidate_sequences(std::vector<std::pair<int, int>>& gene_id_pair_in, double jaccard_threshold_in = JACCARD_THRESHOLD) {
         unsigned int value_a;
         unsigned int value_b;
@@ -123,6 +147,11 @@ public:
         };
     }
 
+    /*
+     * Getter which returns the set of k-mer extracted for each sequence
+     *
+     * @param[out] std::vector<std::array<unsigned int, 4095>>&
+     */
     const std::vector<std::array<unsigned int, 4095>>& get_sequences_kmers() {
         if(this->sequences_kmers.empty())
             throw std::runtime_error("sequences kmers vector is empty");
@@ -130,6 +159,11 @@ public:
         return this->sequences_kmers;
     }
 
+    /*
+     * Getter that returns the set of candidate sequences that have passed the prefiltering phase
+     *
+     * @param[out] const std::vector<std::pair<int, int>>&
+     */
     const std::vector<std::pair<int, int>>& get_candidate_sequences() {
         return this->candidate_sequences;
     }
@@ -144,6 +178,9 @@ private:
     std::vector<std::pair<int, int>> candidate_sequences;
     std::ofstream* log_stream;
 
+    /*
+     * Each sequence is associated with an array whose elements correspond to all possible k-mer of length KMER_SIZE
+     */
     void init_sequences_kmers() {
         for(int i = 0; i < this->input_sequences->size(); ++i) {
             std::array<unsigned int, 4095> array{0};
@@ -152,6 +189,10 @@ private:
         }
     }
 
+    /*
+     * Method selector suitable for calculating the multiplicity of k-mer, as it is an operation that changes
+     * according to the type of sequence (nucleotide or amino acid)
+     */
     void calculate_kmer_multiplicity() {
         if(this->sequences_type == 0)
             this->calculate_kmer_multiplicity_aminoacids();
@@ -159,6 +200,12 @@ private:
             this->calculate_kmer_multiplicity_nucleotides();
     }
 
+    /*
+     * The multiplicity of k-mer is calculated with a sliding window algorithm which takes care of traversing
+     * the entire sequence for all possible substrings of KMER_SIZE length.
+     * The extracted k-mer are transformed into bits and each corresponds to a unique index of the previously created array.
+     * Then the enumeration takes place by incrementing the counters for certain bits from time to time
+     */
     void calculate_kmer_multiplicity_nucleotides() {
         std::string sequence;
         std::string kmer;
@@ -180,6 +227,10 @@ private:
         }
     }
 
+    /*
+     * Similar to the method used to enumerate the k-mer by nucleotide sequences but here there is an additional translation step
+     * that deals, in fact, with translating the substrings of extracted amino acids into nucleotides
+     */
     void calculate_kmer_multiplicity_aminoacids() {
         std::string sequence;
         std::string aminoacid;
@@ -202,10 +253,21 @@ private:
         }
     }
 
+    /*
+     * Method that checks if a given kmer extracted is valid
+     *
+     * @param[out] bool
+     */
     [[nodiscard]] bool kmer_is_valid(const std::string &str) const {
         return str.length() == this->kmer_size && str.find_first_not_of("ACGT") == std::string::npos;
     }
 
+    /*
+     * Method that converts each k-mer into a sequence of bits using bitwise operations
+     *
+     * @param[in] const std::string&
+     * @param[out] int
+     */
     static int kmer_to_int(const std::string& kmer) {
         int bitmap = 0;
         int A = 0b00;
@@ -231,6 +293,15 @@ private:
         return bitmap;
     }
 
+    /*
+     * Method that can be used to define constraints that the sequences must respect, even before carrying out the k-mer
+     * comparison analysis
+     *
+     * @param[in] const std::string&
+     * @param[in] const std::string&
+     *
+     * @param[out] bool
+     */
     static bool check_constraint(const std::string& sequence_a, const std::string& sequence_b) {
         if(sequence_a.length() >= sequence_b.length()*2 || sequence_b.length() >= sequence_a.length()*2)
             return false;
@@ -238,6 +309,15 @@ private:
         return true;
     }
 
+    /*
+     * Method that can be used to define constraints that the sequences must respect, even before carrying out the k-mer
+     * comparison analysis
+     *
+     * @param[in] const int
+     * @param[in] const int
+     *
+     * @param[out] bool
+     */
     [[nodiscard]] bool check_constraint(const int gene_id_a, const int gene_id_b) const {
         const std::string sequence_a = this->input_sequences->operator[](gene_id_a);
         const std::string sequence_b = this->input_sequences->operator[](gene_id_b);
