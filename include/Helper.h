@@ -17,7 +17,7 @@
 namespace Helper {
 
     /*
-     * Templatic function that allows you to combine two maps into a single map which have the key of the same type.
+     * Templatic function that allows to combine two maps into a single map which have the key of the same type.
      *
      * Preserving the keys and values of both
      *
@@ -75,7 +75,7 @@ namespace Helper {
     };
 
     /*
-    * Template function that allows you to print on std::ostream a container identified by a pair of iterators
+    * Template function that allows to print on std::ostream a container identified by a pair of iterators
     * (start and end).
     *
     * @tparam T type of data that the container stores
@@ -92,7 +92,7 @@ namespace Helper {
     }
 
     /*
-    * Template function that allows you to print on std::ostream an unordered map
+    * Template function that allows to print on std::ostream an unordered map
     * (start and end).
     *
     * @tparam map_key type of key
@@ -108,8 +108,20 @@ namespace Helper {
             ostr << item.first << delimiter.c_str() << item.second << std::endl;
     }
 
+    /*
+    * Template function that allows to print on std::ostream an unordered map containing another unordered map
+    * (start and end).
+    *
+    * @tparam map_key type of key
+    * @tparam nested_map_key type of key of nested map
+    * @tparam nested_map_value type of value of nested map
+    *
+    * @param[in] std::ostream&
+    * @param[in] const std::unordered_map<map_key, std::unordered_map<nested_map_key, nested_map_value>>&
+    * @param[in] const std::string&
+    */
     template<typename map_key, typename nested_map_key, typename nested_map_value>
-    void genes_map_print(std::ostream& ostr, const std::unordered_map<map_key, std::unordered_map<nested_map_key, nested_map_value>>& _map, const std::string& delimiter) {
+    void nested_map_print(std::ostream& ostr, const std::unordered_map<map_key, std::unordered_map<nested_map_key, nested_map_value>>& _map, const std::string& delimiter) {
         for (const auto& item : _map) {
             ostr << item.first << delimiter.c_str();
 
@@ -117,6 +129,18 @@ namespace Helper {
         }
     }
 
+    /*
+    * Template function that allows to print on std::ostream an unordered map containing a pair
+    * (start and end).
+    *
+    * @tparam map_key type of key
+    * @tparam pair_val1 type of first item of pair
+    * @tparam pair_val2 type of second item of pair
+    *
+    * @param[in] std::ostream&
+    * @param[in] const std::unordered_map<map_key, std::pair<pair_val1, pair_val2>>&
+    * @param[in] const std::string&
+    */
     template<typename map_key, typename pair_val1, typename pair_val2>
     void pair_unordered_map_print(std::ostream& ostr, const std::unordered_map<map_key, std::pair<pair_val1, pair_val2>>& _map, const std::string& delimiter) {
         for (const auto& item : _map) {
@@ -126,16 +150,43 @@ namespace Helper {
         }
     }
 
+    /*
+    * Template function that allows to print on std::ostream, separately, the values of a pair
+    * (start and end).
+    *
+    * @tparam type1 type of first item of pair
+    * @tparam type2 type of second item of pair
+    *
+    * @param[in] std::ostream&
+    * @param[in] const std::pair<type1, type2>
+    * @param[in] const std::string&
+    */
     template<typename type1, typename type2>
     void simple_pair_print(std::ostream& ostr, const std::pair<type1, type2> _pair, const std::string& delimiter) {
         ostr << std::get<0>(_pair) << delimiter.c_str() << std::get<1>(_pair) << std::endl;
     }
 
+    /*
+    * Template function that allows to print on std::ostream, separately, the first three values of a tuple
+    * (start and end).
+    *
+    * @tparam type1 type of first item of tuple
+    * @tparam type2 type of second item of tuple
+    * @tparam type3 type of third item of tuple
+    *
+    * @param[in] std::ostream&
+    * @param[in] const std::tuple<type1, type2, type3>
+    * @param[in] const std::string&
+    */
     template<typename type1, typename type2, typename type3>
     void simple_triple_print(std::ostream& ostr, const std::tuple<type1, type2, type3> _tuple, const std::string& delimiter) {
         ostr << std::get<0>(_tuple) << delimiter.c_str() << std::get<1>(_tuple) << delimiter.c_str() << std::get<2>(_tuple) << std::endl;
     }
 
+    /*
+     * Utility method that deals with transforming an amino acid into the corresponding nucleotide chain.
+     * The transformation respects the official correspondence table between nucleotides and amino acids of prokaryotes
+     */
     std::string aminoacid_to_nucleotides(const std::string& aminoacid) {
         std::string kmer;
 

@@ -14,8 +14,26 @@
 #include <omp.h>
 #include "../../include/Helper.h"
 
+/*
+ * Class that calculates the similarity between gene sequences, being able to use a medium-high kmer size value.
+ */
 class Homologues {
 public:
+
+    /*
+     * The constructor constructs the adequate data structures in order to proceed with the analysis and takes care of
+     * calling the methods that enumerate the k-mer and calculate the multiplicities
+     *
+     * @param[in] const std::vector<std::string>&
+     * @param[in] const std::vector<std::pair<int, int>>&
+     * @param[in] const int
+     * @param[in] const int
+     * @param[in] std::ofstream*
+     *
+     * @throws std::runtime_error if the log_stream's badbit error state flag is set
+     * @throws std::runtime_error if the input sequences vector is empty
+     * @throws std::runtime_error if the genome sequencesid vector is empty
+     */
     explicit Homologues(const std::vector<std::string>& input_sequences,
                         const std::vector<std::pair<int, int>>& gene_pair_input,
                         const int sequences_type,
@@ -40,6 +58,23 @@ public:
         this->calculate_kmer_multiplicity();
     }
 
+    /*
+     * Main method of the class that deals with finding candidate sequences to be homologous.
+     *
+     * The method works on a data structure containing identifiers of gene pairs to be analyzed received as input at
+     * the time of construction.
+     *
+     * For each gene of each pair to be analyzed, a data structure is created in which the identifiers of the genes
+     * most similar to it will converge.
+     *
+     * The homologues phase consists, in parallel, of comparing the multiplicity of k-mer for pairs of genomes
+     * in order to calculate the Jaccard similarity index, which establishes the similarity between two genes.
+     *
+     * This comparison is obtained by combining in a single data structure the k-mer found by the 2 genes as well as
+     * relative multiplicities
+     *
+     * @param[in] double
+     */
     void find_candidate_sequences(const double jaccard_threshold = 0.0) {
         int id_gene_a;
         int id_gene_b;
@@ -118,6 +153,12 @@ public:
         }
     }
 
+    /*
+     * Getter which returns the vector of k-mer extracted for each sequence
+     *
+     * @param[out] const std::vector<int>&
+     * @throws std::runtime_error if sequences id vector is empty
+     */
     const std::vector<int>& get_sequences_id() {
         if(this->sequences_id.empty())
             throw std::runtime_error("sequences id vector is empty");
@@ -125,6 +166,12 @@ public:
         return this->sequences_id;
     }
 
+    /*
+     * Getter which returns the set of k-mer extracted for each sequence
+     *
+     * @param[out] const std::unordered_map<int, std::map<std::bitset<kvalue>, int, Helper::bitset_comparer<kvalue>>>&
+     * @throws std::runtime_error if sequences kmers vector is empty
+     */
     const std::unordered_map<int, std::map<std::bitset<kvalue>, int, Helper::bitset_comparer<kvalue>>>& get_sequences_kmers() {
         if(this->sequences_kmers.empty())
             throw std::runtime_error("sequences kmers vector is empty");
@@ -132,6 +179,11 @@ public:
         return this->sequences_kmers;
     }
 
+    /*
+     * Getter that returns the set of candidate sequences that have passed the homologues phase
+     *
+     * @param[out] const std::vector<std::pair<int, int>>&
+     */
     const std::unordered_map<int, std::unordered_map<int, double>>& get_candidate_sequences() {
         return this->candidate_sequences;
     }
@@ -147,6 +199,11 @@ private:
     const std::vector<std::pair<int, int>>* gene_pair_input;
     std::unordered_map<int, std::unordered_map<int, double>> candidate_sequences;
 
+    /*
+     * This method sequentially inserts pairs of genes present in a vector of pair into a single vector
+     *
+     * @param[in] const std::vector<std::pair<int, int>>*
+     */
     void collect_sequences_id_from_gene_pair(const std::vector<std::pair<int, int>>* gene_pair_in) {
 
         std::set<int> temp_sequences;
@@ -160,7 +217,7 @@ private:
     }
 
     /*
-     * initializes a map for each sequence with the first k-mer and the counter at 0
+     * Initializes a map for each sequence with the first k-mer and the counter at 0
      */
     void init_sequences_kmers() {
 
@@ -175,6 +232,13 @@ private:
         }
     }
 
+    /*
+     *
+     * The multiplicity of k-mer is calculated with a sliding window algorithm which takes care of traversing
+     * the entire sequence for all possible substrings of calculated kmer size length.
+     * The extracted k-mer are transformed into bits and each corresponds to a unique index of the previously created array.
+     * Then the enumeration takes place by incrementing the counters for certain bits from time to time
+     */
     void calculate_kmer_multiplicity() {
         std::string kmer;
         for(auto &i : this->sequences_kmers) {
@@ -202,6 +266,12 @@ private:
         }
     }
 
+    /*
+     * Method that checks if a given kmer extracted is valid
+     *
+     * @param[in] const std::string
+     * @param[out] bool
+     */
     [[nodiscard]] bool kmer_is_valid(const std::string &str) const {
         if(this->sequences_type == 0)
             return str.length() == this->kmer_size*3 && str.find_first_not_of("ACGT") == std::string::npos;
@@ -209,6 +279,14 @@ private:
             return str.length() == this->kmer_size && str.find_first_not_of("ACGT") == std::string::npos;
     }
 
+    /*
+     * Method that converts each k-mer into a sequence of bits using bitwise operations
+     *
+     * The sequence is stored in the bitset data structure
+     *
+     * @param[in] const std::string&
+     * @param[out] std::bitset<kvalue>
+     */
     static std::bitset<kvalue> kmer_to_bit(const std::string& kmer) {
         std::bitset<kvalue> kmer_bit;
         kmer_bit.set(false);

@@ -38,6 +38,10 @@ public:
      * @param[in] const std::vector<std::vector<int>>&
      * @param[in] const int
      * @param[in] std::ofstream*
+     *
+     * @throws std::runtime_error if the log stream's badbit error state flag is set
+     * @throws std::runtime_error if the input sequences vector is empty
+     * @throws std::runtime_error if the genome sequencesid vector is empty
      */
     explicit PreFilter(const std::vector<std::string>& input_sequences,
                        const std::vector<std::vector<int>>& genome_sequencesid,
@@ -150,7 +154,8 @@ public:
     /*
      * Getter which returns the set of k-mer extracted for each sequence
      *
-     * @param[out] std::vector<std::array<unsigned int, 4095>>&
+     * @param[out] const std::vector<std::array<unsigned int, 4095>>&
+     * @throws std::runtime_error if sequences kmers vector is empty
      */
     const std::vector<std::array<unsigned int, 4095>>& get_sequences_kmers() {
         if(this->sequences_kmers.empty())
@@ -256,6 +261,7 @@ private:
     /*
      * Method that checks if a given kmer extracted is valid
      *
+     * @param[in] const std::string
      * @param[out] bool
      */
     [[nodiscard]] bool kmer_is_valid(const std::string &str) const {

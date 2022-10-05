@@ -73,6 +73,7 @@ Each row of the output file represented a specific gene family retrieved by PanD
 ### Requirements
 Before running ***PanDelos plus plus***, please verify that the following software is installed on your system
 * bash
+* zip
 * g++ version 6 or higher
 * C++17 or higher
 * OpenMP 5.2 or higher
