@@ -136,7 +136,7 @@ You are free to link or use PanDelos plus plus inside source code of your own pr
 <hr />
 
 ## Contributors
-- Vincenzo Bonnici
+- Vincenzo Bonnici, University of Parma, Italy.
 - Giandonato Inverso
 
 <!--
