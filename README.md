@@ -135,6 +135,10 @@ You are free to link or use PanDelos plus plus inside source code of your own pr
 
 <hr />
 
+## Contributors
+- Vincenzo Bonnici
+- Giandonato Inverso
+
 <!--
 ## Detailed description
 
